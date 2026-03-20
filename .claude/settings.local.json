@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm list:*)",
+      "WebSearch",
+      "WebFetch(domain:uiuxpromax.ai)"
+    ],
+    "additionalDirectories": [
+      "e:\\code\\Performance Tool\\docs\\superpowers"
+    ]
+  }
+}
