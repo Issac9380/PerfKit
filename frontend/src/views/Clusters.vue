@@ -97,21 +97,66 @@
         </el-form-item>
 
         <el-form-item label="认证方式" prop="authType">
-          <el-select v-model="form.authType" placeholder="选择认证方式" style="width: 100%">
+          <el-select v-model="form.authType" placeholder="选择认证方式" style="width: 100%" @change="handleAuthTypeChange">
             <el-option label="Kubeconfig" value="kubeconfig" />
             <el-option label="Token" value="token" />
             <el-option label="证书" value="certificate" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="认证配置" prop="config">
-          <el-input
-            v-model="form.config"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入认证配置 (JSON 格式或 kubeconfig 内容)"
-          />
-        </el-form-item>
+        <!-- Kubeconfig 认证 -->
+        <template v-if="form.authType === 'kubeconfig'">
+          <el-form-item label="Kubeconfig" prop="config">
+            <el-input
+              v-model="form.config"
+              type="textarea"
+              :rows="6"
+              placeholder="请粘贴 kubeconfig 内容"
+            />
+            <div class="form-tip">粘贴完整的 kubeconfig 文件内容（YAML 格式）</div>
+          </el-form-item>
+        </template>
+
+        <!-- Token 认证 -->
+        <template v-else-if="form.authType === 'token'">
+          <el-form-item label="Token" prop="config">
+            <el-input
+              v-model="form.config"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入 Bearer Token"
+            />
+            <div class="form-tip">在 K8S 中执行: kubectl create token default --duration=87600h 获取</div>
+          </el-form-item>
+        </template>
+
+        <!-- 证书认证 -->
+        <template v-else-if="form.authType === 'certificate'">
+          <el-form-item label="客户端证书" prop="clientCert">
+            <el-input
+              v-model="form.clientCert"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入客户端证书 (PEM 格式)"
+            />
+          </el-form-item>
+          <el-form-item label="客户端密钥" prop="clientKey">
+            <el-input
+              v-model="form.clientKey"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入客户端私钥 (PEM 格式)"
+            />
+          </el-form-item>
+          <el-form-item label="CA 证书" prop="caCert">
+            <el-input
+              v-model="form.caCert"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入 CA 证书 (PEM 格式，可选)"
+            />
+          </el-form-item>
+        </template>
 
         <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" :rows="2" />
@@ -199,6 +244,9 @@ const form = reactive({
   apiServer: '',
   authType: 'kubeconfig',
   config: '',
+  clientCert: '',
+  clientKey: '',
+  caCert: '',
   description: ''
 })
 
@@ -206,6 +254,13 @@ const rules = {
   name: [{ required: true, message: '请输入集群名称', trigger: 'blur' }],
   apiServer: [{ required: true, message: '请输入 API Server', trigger: 'blur' }],
   authType: [{ required: true, message: '请选择认证方式', trigger: 'change' }]
+}
+
+function handleAuthTypeChange() {
+  // Clear certificate fields when switching auth type
+  form.clientCert = ''
+  form.clientKey = ''
+  form.caCert = ''
 }
 
 function getAuthTypeLabel(type) {
@@ -229,13 +284,33 @@ async function loadClusters() {
 function openDialog(cluster = null) {
   editingCluster.value = cluster
   if (cluster) {
-    Object.assign(form, cluster)
+    // Parse config based on auth type
+    let parsedConfig = {}
+    try {
+      parsedConfig = JSON.parse(cluster.config || '{}')
+    } catch (e) {
+      parsedConfig = {}
+    }
+
+    Object.assign(form, {
+      name: cluster.name,
+      apiServer: cluster.apiServer,
+      authType: cluster.authType,
+      config: parsedConfig.kubeconfig || parsedConfig.token || '',
+      clientCert: parsedConfig.clientCert || '',
+      clientKey: parsedConfig.clientKey || '',
+      caCert: parsedConfig.caCert || '',
+      description: cluster.description
+    })
   } else {
     Object.assign(form, {
       name: '',
       apiServer: '',
       authType: 'kubeconfig',
       config: '',
+      clientCert: '',
+      clientKey: '',
+      caCert: '',
       description: ''
     })
   }
@@ -249,11 +324,33 @@ async function submitForm() {
     if (valid) {
       submitting.value = true
       try {
+        // Build config based on auth type
+        let configData = {}
+        if (form.authType === 'kubeconfig') {
+          configData = { kubeconfig: form.config }
+        } else if (form.authType === 'token') {
+          configData = { token: form.config }
+        } else if (form.authType === 'certificate') {
+          configData = {
+            clientCert: form.clientCert,
+            clientKey: form.clientKey,
+            caCert: form.caCert
+          }
+        }
+
+        const submitData = {
+          name: form.name,
+          apiServer: form.apiServer,
+          authType: form.authType,
+          config: JSON.stringify(configData),
+          description: form.description
+        }
+
         if (editingCluster.value) {
-          await api.put(`/clusters/${editingCluster.value.id}`, form)
+          await api.put(`/clusters/${editingCluster.value.id}`, submitData)
           ElMessage.success('更新成功')
         } else {
-          await api.post('/clusters', form)
+          await api.post('/clusters', submitData)
           ElMessage.success('添加成功')
         }
         dialogVisible.value = false
@@ -502,5 +599,12 @@ onMounted(() => {
 .empty-state p {
   color: #94A3B8;
   margin-bottom: 16px;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #94A3B8;
+  margin-top: 4px;
+  line-height: 1.5;
 }
 </style>
