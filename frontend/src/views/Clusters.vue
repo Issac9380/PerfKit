@@ -133,28 +133,64 @@
         <!-- 证书认证 -->
         <template v-else-if="form.authType === 'certificate'">
           <el-form-item label="客户端证书" prop="clientCert">
-            <el-input
-              v-model="form.clientCert"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入客户端证书 (PEM 格式)"
-            />
+            <el-upload
+              :auto-upload="false"
+              :limit="1"
+              accept=".pem,.crt,.cer"
+              @change="(file) => handleFileChange(file, 'clientCert')"
+            >
+              <el-button size="small">
+                <el-icon><Upload /></el-icon>
+                选择文件
+              </el-button>
+              <template #tip>
+                <div class="upload-tip">支持 .pem, .crt, .cer 格式</div>
+              </template>
+            </el-upload>
+            <div v-if="form.clientCert" class="file-name">
+              <el-icon><Document /></el-icon>
+              {{ getFileName(form.clientCert) }}
+            </div>
           </el-form-item>
           <el-form-item label="客户端密钥" prop="clientKey">
-            <el-input
-              v-model="form.clientKey"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入客户端私钥 (PEM 格式)"
-            />
+            <el-upload
+              :auto-upload="false"
+              :limit="1"
+              accept=".pem,.key"
+              @change="(file) => handleFileChange(file, 'clientKey')"
+            >
+              <el-button size="small">
+                <el-icon><Upload /></el-icon>
+                选择文件
+              </el-button>
+              <template #tip>
+                <div class="upload-tip">支持 .pem, .key 格式</div>
+              </template>
+            </el-upload>
+            <div v-if="form.clientKey" class="file-name">
+              <el-icon><Document /></el-icon>
+              {{ getFileName(form.clientKey) }}
+            </div>
           </el-form-item>
           <el-form-item label="CA 证书" prop="caCert">
-            <el-input
-              v-model="form.caCert"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入 CA 证书 (PEM 格式，可选)"
-            />
+            <el-upload
+              :auto-upload="false"
+              :limit="1"
+              accept=".pem,.crt,.cer"
+              @change="(file) => handleFileChange(file, 'caCert')"
+            >
+              <el-button size="small">
+                <el-icon><Upload /></el-icon>
+                选择文件（可选）
+              </el-button>
+              <template #tip>
+                <div class="upload-tip">支持 .pem, .crt, .cer 格式</div>
+              </template>
+            </el-upload>
+            <div v-if="form.caCert" class="file-name">
+              <el-icon><Document /></el-icon>
+              {{ getFileName(form.caCert) }}
+            </div>
           </el-form-item>
         </template>
 
@@ -221,7 +257,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Connection, FolderOpened, MoreFilled } from '@element-plus/icons-vue'
+import { Plus, Connection, FolderOpened, MoreFilled, Upload, Document } from '@element-plus/icons-vue'
 import api from '@/api'
 
 const clusters = ref([])
@@ -261,6 +297,22 @@ function handleAuthTypeChange() {
   form.clientCert = ''
   form.clientKey = ''
   form.caCert = ''
+}
+
+function handleFileChange(uploadFile, field) {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    form[field] = e.target.result
+  }
+  reader.readAsText(uploadFile.raw)
+}
+
+function getFileName(content) {
+  // Extract filename from base64 or return a default name
+  if (content && content.length > 50) {
+    return '已选择文件 (证书内容已加载)'
+  }
+  return content || ''
 }
 
 function getAuthTypeLabel(type) {
@@ -606,5 +658,27 @@ onMounted(() => {
   color: #94A3B8;
   margin-top: 4px;
   line-height: 1.5;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: #94A3B8;
+  margin-top: 4px;
+}
+
+.file-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #F1F5F9;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #10B981;
+}
+
+.file-name .el-icon {
+  font-size: 14px;
 }
 </style>
