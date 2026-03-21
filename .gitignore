@@ -1,1 +1,8 @@
 .worktrees/
+target/
+*.class
+*.log
+*.jar
+*.war
+.idea/
+*.iml
