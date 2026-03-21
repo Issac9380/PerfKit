@@ -6,6 +6,7 @@ import com.ops.mapper.CommandTemplateMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -23,5 +24,25 @@ public class CommandTemplateController {
     @GetMapping("/{id}")
     public Result<CommandTemplate> get(@PathVariable Long id) {
         return Result.success(commandTemplateMapper.selectById(id));
+    }
+
+    @PostMapping
+    public Result<CommandTemplate> create(@RequestBody CommandTemplate template) {
+        template.setCreatedAt(LocalDateTime.now());
+        commandTemplateMapper.insert(template);
+        return Result.success(template);
+    }
+
+    @PutMapping("/{id}")
+    public Result<CommandTemplate> update(@PathVariable Long id, @RequestBody CommandTemplate template) {
+        template.setId(id);
+        commandTemplateMapper.updateById(template);
+        return Result.success(template);
+    }
+
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) {
+        commandTemplateMapper.deleteById(id);
+        return Result.success(null);
     }
 }

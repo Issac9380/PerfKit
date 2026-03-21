@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @TableName("case_library")
 public class CaseLibrary {
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
     private String title;
     private String problemPattern;

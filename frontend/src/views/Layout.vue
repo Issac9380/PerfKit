@@ -41,6 +41,11 @@
           <el-icon><Lightning /></el-icon>
           <span>热部署</span>
         </el-menu-item>
+
+        <el-menu-item index="/templates">
+          <el-icon><DocumentAdd /></el-icon>
+          <span>模板管理</span>
+        </el-menu-item>
       </el-menu>
 
       <div class="sidebar-footer">

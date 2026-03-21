@@ -117,8 +117,8 @@ CREATE TABLE IF NOT EXISTS hot_deploy_record (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 初始化默认命令模板
-INSERT INTO command_template (name, command_type, template, description) VALUES
+-- 初始化默认命令模板 (使用 INSERT OR IGNORE 防止重复)
+INSERT OR IGNORE INTO command_template (name, command_type, template, description) VALUES
 -- JVM 原生命令
 ('JVM堆内存', 'jmap', 'jmap -heap {pid}', '查看JVM堆内存信息'),
 ('JVM线程堆栈', 'jstack', 'jstack -l {pid}', '查看JVM线程堆栈（含锁信息）'),

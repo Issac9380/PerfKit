@@ -5,7 +5,7 @@ spring:
   application:
     name: ops-platform
   datasource:
-    driver-class-name: org.sqlite.JdbcDriver
+    driver-class-name: org.sqlite.JDBC
     url: jdbc:sqlite:data/ops-platform.db
   sql:
     init:

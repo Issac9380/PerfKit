@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @TableName("log_path_config")
 public class LogPathConfig {
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
     private Long clusterId;
     private String containerType;

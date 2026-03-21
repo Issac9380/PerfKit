@@ -40,6 +40,11 @@ const routes = [
         path: 'deploy',
         name: 'Deploy',
         component: () => import('@/views/Deploy.vue')
+      },
+      {
+        path: 'templates',
+        name: 'Templates',
+        component: () => import('@/views/Templates.vue')
       }
     ]
   }

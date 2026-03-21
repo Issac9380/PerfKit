@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @TableName("hot_deploy_record")
 public class HotDeployRecord {
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
     private Long clusterId;
     private String namespace;
