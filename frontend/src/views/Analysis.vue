@@ -1,7 +1,10 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">性能分析</h1>
+      <div>
+        <h1 class="page-title">性能分析</h1>
+        <p class="page-subtitle">执行 jstack、jmap 等命令进行性能分析</p>
+      </div>
     </div>
 
     <!-- 执行表单 -->
@@ -76,11 +79,11 @@
       <div class="section-header">
         <span class="section-title">可用命令模板</span>
       </div>
-      <el-table :data="templates" size="small">
+      <el-table :data="templates" size="default">
         <el-table-column prop="name" label="名称" width="180" />
         <el-table-column prop="commandType" label="类型" width="100">
           <template #default="{ row }">
-            <el-tag size="small">{{ row.commandType }}</el-tag>
+            <el-tag size="small" type="info">{{ row.commandType }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="template" label="模板" />
@@ -91,7 +94,9 @@
     <!-- 执行结果 -->
     <div v-if="result" class="card result-section">
       <div class="result-header">
-        <el-icon class="result-icon"><Finished /></el-icon>
+        <div class="result-icon">
+          <el-icon><Finished /></el-icon>
+        </div>
         <span class="result-title">执行结果</span>
       </div>
 
@@ -202,7 +207,6 @@ async function executeCommand() {
   result.value = null
 
   try {
-    // 解析参数
     const params = {}
     if (form.params) {
       form.params.split(',').forEach(p => {
@@ -252,46 +256,52 @@ onMounted(() => {
 
 .section-title {
   font-size: 16px;
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-weight: 600;
+  color: #1E293B;
 }
 
 .result-section {
-  padding: 20px;
+  padding: 24px;
 }
 
 .result-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
 .result-icon {
-  font-size: 20px;
-  color: var(--color-primary);
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
 }
 
 .result-title {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .command-info {
   margin-bottom: 16px;
-  padding: 12px;
-  background: var(--color-bg-base);
-  border-radius: var(--radius-md);
+  padding: 14px;
+  background: #F8FAFC;
+  border-radius: 10px;
 }
 
 .command-info .label {
-  color: var(--color-text-muted);
+  color: #94A3B8;
   margin-right: 8px;
 }
 
 .command-info code {
-  font-family: var(--font-mono);
-  color: var(--color-primary);
+  font-family: 'JetBrains Mono', monospace;
+  color: #2563EB;
 }
 
 .output-section, .error-section {
@@ -300,38 +310,38 @@ onMounted(() => {
 
 .output-header, .error-header {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 8px;
 }
 
 .output-header {
-  color: var(--color-success);
+  color: #10B981;
 }
 
 .error-header {
-  color: var(--color-danger);
+  color: #EF4444;
 }
 
 .output-content, .error-content {
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
-  padding: 12px;
-  border-radius: var(--radius-md);
+  padding: 16px;
+  border-radius: 12px;
   overflow-x: auto;
 }
 
 .output-content {
-  background: var(--color-bg-base);
-  color: var(--color-text-secondary);
+  background: #F8FAFC;
+  color: #64748B;
 }
 
 .error-content {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--color-danger);
+  background: #FEE2E2;
+  color: #EF4444;
 }
 
 .no-output {
-  color: var(--color-text-muted);
+  color: #94A3B8;
   font-style: italic;
 }
 </style>

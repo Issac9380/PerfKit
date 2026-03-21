@@ -2,18 +2,20 @@
   <div class="login-container">
     <!-- 背景效果 -->
     <div class="bg-effects">
-      <div class="grid-lines"></div>
-      <div class="glow-orb orb-1"></div>
-      <div class="glow-orb orb-2"></div>
+      <div class="gradient-orb orb-1"></div>
+      <div class="gradient-orb orb-2"></div>
+      <div class="grid-pattern"></div>
     </div>
 
     <!-- 登录卡片 -->
     <div class="login-card">
       <div class="login-header">
-        <div class="logo">
-          <el-icon class="logo-icon"><Monitor /></el-icon>
-          <span class="logo-text">研发作业平台</span>
+        <div class="logo-wrap">
+          <div class="logo-icon">
+            <el-icon><Monitor /></el-icon>
+          </div>
         </div>
+        <h1 class="logo-text">研发作业平台</h1>
         <p class="subtitle">面向研发人员的生产环境问题定位工具</p>
       </div>
 
@@ -44,7 +46,7 @@
         <el-form-item prop="username">
           <el-input
             v-model="loginForm.username"
-            placeholder="用户名"
+            placeholder="请输入用户名"
             size="large"
             :prefix-icon="User"
           />
@@ -54,7 +56,7 @@
           <el-input
             v-model="loginForm.password"
             type="password"
-            placeholder="密码"
+            placeholder="请输入密码"
             size="large"
             :prefix-icon="Lock"
             show-password
@@ -85,7 +87,7 @@
         <el-form-item prop="username">
           <el-input
             v-model="registerForm.username"
-            placeholder="用户名"
+            placeholder="请输入用户名"
             size="large"
             :prefix-icon="User"
           />
@@ -94,7 +96,7 @@
         <el-form-item prop="email">
           <el-input
             v-model="registerForm.email"
-            placeholder="邮箱"
+            placeholder="请输入邮箱"
             size="large"
             :prefix-icon="Message"
           />
@@ -104,7 +106,7 @@
           <el-input
             v-model="registerForm.password"
             type="password"
-            placeholder="密码"
+            placeholder="请输入密码"
             size="large"
             :prefix-icon="Lock"
             show-password
@@ -115,7 +117,7 @@
           <el-input
             v-model="registerForm.confirmPassword"
             type="password"
-            placeholder="确认密码"
+            placeholder="请确认密码"
             size="large"
             :prefix-icon="Lock"
             show-password
@@ -257,7 +259,7 @@ async function handleRegister() {
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: var(--color-bg-base);
+  background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
 }
 
 /* 背景效果 */
@@ -267,56 +269,55 @@ async function handleRegister() {
   pointer-events: none;
 }
 
-.grid-lines {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0, 217, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 217, 255, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
-}
-
-.glow-orb {
+.gradient-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.3;
+  filter: blur(80px);
+  opacity: 0.4;
 }
 
 .orb-1 {
-  width: 400px;
-  height: 400px;
-  background: var(--color-primary);
-  top: -100px;
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  top: -150px;
   right: -100px;
   animation: float 20s ease-in-out infinite;
 }
 
 .orb-2 {
-  width: 300px;
-  height: 300px;
-  background: #6366f1;
-  bottom: -50px;
-  left: -50px;
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  bottom: -100px;
+  left: -100px;
   animation: float 15s ease-in-out infinite reverse;
 }
 
+.grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
 @keyframes float {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(30px, 30px); }
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, 30px) scale(1.05); }
 }
 
 /* 登录卡片 */
 .login-card {
-  width: 400px;
-  background: rgba(17, 24, 39, 0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  width: 420px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
   padding: 40px;
   position: relative;
   z-index: 10;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08);
 }
 
 .login-header {
@@ -324,35 +325,48 @@ async function handleRegister() {
   margin-bottom: 32px;
 }
 
-.logo {
+.logo-wrap {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .logo-icon {
-  font-size: 36px;
-  color: var(--color-primary);
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+}
+
+.logo-icon .el-icon {
+  font-size: 32px;
+  color: #FFFFFF;
 }
 
 .logo-text {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--color-text-primary);
+  font-size: 26px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
-  color: var(--color-text-muted);
+  color: #94A3B8;
   font-size: 14px;
 }
 
 /* 标签页 */
 .login-tabs {
   display: flex;
-  margin-bottom: 32px;
-  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 28px;
+  background: #F1F5F9;
+  border-radius: 12px;
+  padding: 4px;
 }
 
 .tab {
@@ -360,29 +374,22 @@ async function handleRegister() {
   text-align: center;
   padding: 12px;
   cursor: pointer;
-  color: var(--color-text-muted);
+  color: #64748B;
   font-size: 15px;
   font-weight: 500;
-  transition: all var(--transition-normal);
-  position: relative;
+  transition: all 0.25s ease;
+  border-radius: 10px;
 }
 
 .tab:hover {
-  color: var(--color-text-secondary);
+  color: #2563EB;
 }
 
 .tab.active {
-  color: var(--color-primary);
-}
-
-.tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--color-primary);
+  background: #FFFFFF;
+  color: #2563EB;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 /* 表单 */
@@ -391,19 +398,20 @@ async function handleRegister() {
 }
 
 .login-form :deep(.el-input__wrapper) {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 4px 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 4px 14px;
+  transition: all 0.2s ease;
 }
 
 .login-form :deep(.el-input__wrapper:hover) {
-  border-color: var(--color-primary);
+  border-color: #CBD5E1;
 }
 
 .login-form :deep(.el-input__wrapper.is-focus) {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1) !important;
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
 }
 
 .login-form :deep(.el-form-item) {
@@ -412,24 +420,26 @@ async function handleRegister() {
 
 .submit-btn {
   width: 100%;
-  height: 44px;
+  height: 48px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   margin-top: 8px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 12px;
+  transition: all 0.25s ease;
 }
 
 .submit-btn:hover {
-  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
 }
 
 /* 底部 */
 .login-footer {
   position: absolute;
-  bottom: 24px;
-  color: var(--color-text-muted);
+  bottom: 28px;
+  color: #94A3B8;
   font-size: 13px;
 }
 </style>

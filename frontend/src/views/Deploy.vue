@@ -1,7 +1,10 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">热部署</h1>
+      <div>
+        <h1 class="page-title">热部署</h1>
+        <p class="page-subtitle">使用 Arthas 进行在线热部署</p>
+      </div>
     </div>
 
     <!-- 上传文件 -->
@@ -18,9 +21,11 @@
         :on-error="handleUploadError"
         accept=".class,.jar"
       >
-        <el-icon class="upload-icon"><UploadFilled /></el-icon>
-        <div class="upload-text">
-          拖拽 .class 或 .jar 文件到此处
+        <div class="upload-content">
+          <el-icon class="upload-icon"><UploadFilled /></el-icon>
+          <div class="upload-text">
+            拖拽 .class 或 .jar 文件到此处
+          </div>
         </div>
         <template #tip>
           <div class="upload-tip">
@@ -259,9 +264,9 @@ onMounted(() => {
 
 .section-title {
   font-size: 16px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  margin-bottom: 16px;
+  font-weight: 600;
+  color: #1E293B;
+  margin-bottom: 20px;
 }
 
 .upload-area {
@@ -269,30 +274,36 @@ onMounted(() => {
 }
 
 .upload-area :deep(.el-upload-dragger) {
-  background: var(--color-bg-elevated);
-  border-color: var(--color-border);
-  border-radius: var(--radius-lg);
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  border-radius: 16px;
   padding: 40px;
+  transition: all 0.25s ease;
 }
 
 .upload-area :deep(.el-upload-dragger:hover) {
-  border-color: var(--color-primary);
+  border-color: #2563EB;
+  background: #DBEAFE;
+}
+
+.upload-content {
+  text-align: center;
 }
 
 .upload-icon {
-  font-size: 48px;
-  color: var(--color-primary);
+  font-size: 52px;
+  color: #2563EB;
   margin-bottom: 16px;
 }
 
 .upload-text {
-  color: var(--color-text-secondary);
-  font-size: 14px;
+  color: #64748B;
+  font-size: 15px;
 }
 
 .upload-tip {
-  color: var(--color-text-muted);
-  font-size: 12px;
+  color: #94A3B8;
+  font-size: 13px;
   margin-top: 8px;
 }
 
@@ -305,9 +316,9 @@ onMounted(() => {
 }
 
 .info-content ol {
-  color: var(--color-text-secondary);
+  color: #64748B;
   padding-left: 20px;
-  line-height: 2;
+  line-height: 2.2;
 }
 
 .info-content li {
@@ -317,12 +328,16 @@ onMounted(() => {
 .warning-box {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  padding: 12px;
-  background: rgba(245, 158, 11, 0.1);
-  border-radius: var(--radius-md);
-  color: var(--color-warning);
+  gap: 10px;
+  margin-top: 20px;
+  padding: 14px;
+  background: #FEF3C7;
+  border-radius: 12px;
+  color: #B45309;
   font-size: 13px;
+}
+
+.warning-box .el-icon {
+  font-size: 18px;
 }
 </style>

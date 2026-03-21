@@ -1,7 +1,10 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">K8S 集群管理</h1>
+      <div>
+        <h1 class="page-title">K8S 集群管理</h1>
+        <p class="page-subtitle">管理多集群连接配置</p>
+      </div>
       <el-button type="primary" @click="openDialog()">
         <el-icon><Plus /></el-icon>
         添加集群
@@ -17,7 +20,9 @@
       >
         <div class="cluster-header">
           <div class="cluster-info">
-            <el-icon class="cluster-icon"><Connection /></el-icon>
+            <div class="cluster-icon-wrap">
+              <el-icon class="cluster-icon"><Connection /></el-icon>
+            </div>
             <span class="cluster-name">{{ cluster.name }}</span>
           </div>
           <div :class="['status-dot', cluster.status === 'ACTIVE' ? 'success' : 'danger']"></div>
@@ -25,30 +30,30 @@
 
         <div class="cluster-details">
           <div class="detail-item">
-            <span class="label">API Server:</span>
+            <span class="label">API Server</span>
             <span class="value">{{ cluster.apiServer }}</span>
           </div>
           <div class="detail-item">
-            <span class="label">认证方式:</span>
-            <el-tag size="small">{{ getAuthTypeLabel(cluster.authType) }}</el-tag>
+            <span class="label">认证方式</span>
+            <el-tag size="small" type="info">{{ getAuthTypeLabel(cluster.authType) }}</el-tag>
           </div>
           <div class="detail-item" v-if="cluster.description">
-            <span class="label">描述:</span>
+            <span class="label">描述</span>
             <span class="value">{{ cluster.description }}</span>
           </div>
         </div>
 
         <div class="cluster-actions">
-          <el-button size="small" @click="testConnection(cluster.id)">
+          <el-button size="default" @click="testConnection(cluster.id)">
             <el-icon><Connection /></el-icon>
             测试连接
           </el-button>
-          <el-button size="small" type="primary" @click="openNamespacesDialog(cluster)">
+          <el-button size="default" type="primary" @click="openNamespacesDialog(cluster)">
             <el-icon><FolderOpened /></el-icon>
             查看资源
           </el-button>
           <el-dropdown @command="(cmd) => handleCommand(cmd, cluster)">
-            <el-button size="small">
+            <el-button size="default">
               <el-icon><MoreFilled /></el-icon>
             </el-button>
             <template #dropdown>
@@ -63,7 +68,9 @@
 
       <!-- 空状态 -->
       <div v-if="clusters.length === 0" class="empty-state">
-        <el-icon><Connection /></el-icon>
+        <div class="empty-icon-wrap">
+          <el-icon class="empty-icon"><Connection /></el-icon>
+        </div>
         <p>暂无集群配置</p>
         <el-button type="primary" @click="openDialog()">添加第一个集群</el-button>
       </div>
@@ -314,7 +321,6 @@ async function viewContainers(pod) {
 
 async function viewLogs(pod) {
   try {
-    // 先获取容器
     const containerRes = await api.get(
       `/clusters/${selectedCluster.value.id}/pods/${pod.name}/containers?namespace=${selectedNamespace.value}`
     )
@@ -362,8 +368,7 @@ onMounted(() => {
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  align-items: flex-start;
 }
 
 .cluster-grid {
@@ -373,63 +378,76 @@ onMounted(() => {
 }
 
 .cluster-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  transition: all var(--transition-normal);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .cluster-card:hover {
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-glow);
+  border-color: #3B82F6;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);
+  transform: translateY(-2px);
 }
 
 .cluster-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #E2E8F0;
 }
 
 .cluster-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+}
+
+.cluster-icon-wrap {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cluster-icon {
-  font-size: 24px;
-  color: var(--color-primary);
+  font-size: 22px;
+  color: #FFFFFF;
 }
 
 .cluster-name {
   font-size: 18px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #1E293B;
 }
 
 .cluster-details {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .detail-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   font-size: 14px;
 }
 
 .detail-item .label {
-  color: var(--color-text-muted);
+  color: #94A3B8;
   width: 80px;
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 .detail-item .value {
-  color: var(--color-text-secondary);
+  color: #64748B;
   word-break: break-all;
 }
 
@@ -439,18 +457,18 @@ onMounted(() => {
 }
 
 .log-viewer {
-  background: var(--color-bg-base);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
   padding: 16px;
   max-height: 400px;
   overflow: auto;
 }
 
 .log-viewer pre {
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
-  color: var(--color-text-secondary);
+  color: #64748B;
   white-space: pre-wrap;
   word-break: break-all;
   margin: 0;
@@ -458,5 +476,31 @@ onMounted(() => {
 
 .empty-state {
   grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  background: #FFFFFF;
+  border: 1px dashed #E2E8F0;
+  border-radius: 16px;
+}
+
+.empty-icon-wrap {
+  width: 80px;
+  height: 80px;
+  background: #F1F5F9;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.empty-icon {
+  font-size: 36px;
+  color: #94A3B8;
+}
+
+.empty-state p {
+  color: #94A3B8;
+  margin-bottom: 16px;
 }
 </style>

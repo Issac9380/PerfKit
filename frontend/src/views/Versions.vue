@@ -1,10 +1,13 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">版本管理</h1>
+      <div>
+        <h1 class="page-title">版本管理</h1>
+        <p class="page-subtitle">管理 JDK 和 Arthas 版本</p>
+      </div>
     </div>
 
-    <el-tabs v-model="activeTab">
+    <el-tabs v-model="activeTab" class="custom-tabs">
       <!-- JDK 版本 -->
       <el-tab-pane label="JDK 版本" name="jdk">
         <div class="version-section">
@@ -43,7 +46,9 @@
           </el-table>
 
           <div v-if="jdkVersions.length === 0" class="empty-state">
-            <el-icon><Box /></el-icon>
+            <div class="empty-icon-wrap">
+              <el-icon class="empty-icon"><Box /></el-icon>
+            </div>
             <p>暂无 JDK 版本</p>
           </div>
         </div>
@@ -87,7 +92,9 @@
           </el-table>
 
           <div v-if="arthasVersions.length === 0" class="empty-state">
-            <el-icon><Box /></el-icon>
+            <div class="empty-icon-wrap">
+              <el-icon class="empty-icon"><Box /></el-icon>
+            </div>
             <p>暂无 Arthas 版本</p>
           </div>
         </div>
@@ -106,9 +113,11 @@
         :on-error="handleUploadError"
         :limit="1"
       >
-        <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-        <div class="el-upload__text">
-          拖拽文件到此处 或 <em>点击上传</em>
+        <div class="upload-content">
+          <el-icon class="upload-icon"><UploadFilled /></el-icon>
+          <div class="upload-text">
+            拖拽文件到此处 或 <em>点击上传</em>
+          </div>
         </div>
         <template #tip>
           <div class="el-upload__tip">
@@ -233,10 +242,10 @@ onMounted(() => {
 
 <style scoped>
 .version-section {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 24px;
 }
 
 .section-header {
@@ -248,24 +257,76 @@ onMounted(() => {
 
 .section-title {
   font-size: 16px;
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-weight: 600;
+  color: #1E293B;
 }
 
 .version-table {
   margin-top: 16px;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .md5-code {
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
-  color: var(--color-text-muted);
-  background: var(--color-bg-base);
-  padding: 2px 6px;
-  border-radius: 4px;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 4px 8px;
+  border-radius: 6px;
 }
 
 .upload-demo {
   text-align: center;
+}
+
+.upload-content {
+  padding: 20px;
+}
+
+.upload-icon {
+  font-size: 48px;
+  color: #2563EB;
+  margin-bottom: 12px;
+}
+
+.upload-text {
+  color: #64748B;
+  font-size: 14px;
+}
+
+.upload-text em {
+  color: #2563EB;
+  font-style: normal;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  background: #F8FAFC;
+  border: 1px dashed #E2E8F0;
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
+.empty-icon-wrap {
+  width: 64px;
+  height: 64px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.empty-icon {
+  font-size: 28px;
+  color: #94A3B8;
+}
+
+.empty-state p {
+  color: #94A3B8;
 }
 </style>

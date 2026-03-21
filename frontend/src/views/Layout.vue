@@ -1,9 +1,11 @@
 <template>
   <el-container class="layout-container">
     <!-- 侧边栏 -->
-    <el-aside width="240px" class="sidebar">
+    <el-aside width="260px" class="sidebar">
       <div class="logo">
-        <el-icon class="logo-icon"><Monitor /></el-icon>
+        <div class="logo-icon-wrap">
+          <el-icon class="logo-icon"><Monitor /></el-icon>
+        </div>
         <span class="logo-text">研发作业平台</span>
       </div>
 
@@ -11,8 +13,8 @@
         :default-active="activeMenu"
         class="sidebar-menu"
         background-color="transparent"
-        text-color="#94a3b8"
-        active-text-color="#00d9ff"
+        text-color="#64748B"
+        active-text-color="#2563EB"
         :router="true"
       >
         <el-menu-item index="/clusters">
@@ -57,7 +59,7 @@
         <div class="header-right">
           <el-dropdown @command="handleCommand">
             <div class="user-info">
-              <el-avatar :size="32" class="user-avatar">
+              <el-avatar :size="36" class="user-avatar">
                 <el-icon><User /></el-icon>
               </el-avatar>
               <span class="username">Admin</span>
@@ -118,14 +120,15 @@ function handleCommand(command) {
 <style scoped>
 .layout-container {
   height: 100vh;
-  background: var(--color-bg-base);
+  background: #F8FAFC;
 }
 
 .sidebar {
-  background: linear-gradient(180deg, var(--color-bg-surface) 0%, var(--color-bg-base) 100%);
-  border-right: 1px solid var(--color-border);
+  background: #FFFFFF;
+  border-right: 1px solid #E2E8F0;
   display: flex;
   flex-direction: column;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
 }
 
 .logo {
@@ -133,19 +136,30 @@ function handleCommand(command) {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.logo-icon-wrap {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .logo-icon {
-  font-size: 28px;
-  color: var(--color-primary);
+  font-size: 22px;
+  color: #FFFFFF;
 }
 
 .logo-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  letter-spacing: 0.5px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1E293B;
+  letter-spacing: -0.3px;
 }
 
 .sidebar-menu {
@@ -158,17 +172,18 @@ function handleCommand(command) {
   height: 48px;
   line-height: 48px;
   margin: 4px 12px;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
+  border-radius: 10px;
+  transition: all 0.25s ease;
+  font-weight: 500;
 }
 
 .sidebar-menu :deep(.el-menu-item:hover) {
-  background: var(--color-bg-elevated) !important;
+  background: #F1F5F9 !important;
 }
 
 .sidebar-menu :deep(.el-menu-item.is-active) {
-  background: rgba(0, 217, 255, 0.1) !important;
-  color: var(--color-primary) !important;
+  background: #DBEAFE !important;
+  color: #2563EB !important;
 }
 
 .sidebar-menu :deep(.el-menu-item.is-active)::before {
@@ -178,29 +193,30 @@ function handleCommand(command) {
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
-  height: 24px;
-  background: var(--color-primary);
-  border-radius: 0 2px 2px 0;
+  height: 20px;
+  background: #2563EB;
+  border-radius: 0 3px 3px 0;
 }
 
 .sidebar-footer {
   padding: 16px 20px;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid #E2E8F0;
 }
 
 .version-tag {
   font-size: 12px;
-  color: var(--color-text-muted);
-  font-family: var(--font-mono);
+  color: #94A3B8;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .header {
-  background: var(--color-bg-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .header-left {
@@ -209,9 +225,10 @@ function handleCommand(command) {
 }
 
 .page-name {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-size: 20px;
+  font-weight: 600;
+  color: #1E293B;
+  letter-spacing: -0.3px;
 }
 
 .header-right {
@@ -222,34 +239,35 @@ function handleCommand(command) {
 .user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
   padding: 8px 12px;
-  border-radius: var(--radius-md);
-  transition: background var(--transition-fast);
+  border-radius: 10px;
+  transition: background 0.2s ease;
 }
 
 .user-info:hover {
-  background: var(--color-bg-elevated);
+  background: #F1F5F9;
 }
 
 .user-avatar {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  border: none;
 }
 
 .username {
-  color: var(--color-text-secondary);
+  color: #64748B;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .dropdown-icon {
-  color: var(--color-text-muted);
+  color: #94A3B8;
   font-size: 12px;
 }
 
 .main-content {
-  background: var(--color-bg-base);
+  background: #F8FAFC;
   padding: 0;
   overflow-y: auto;
 }

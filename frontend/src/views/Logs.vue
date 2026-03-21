@@ -1,7 +1,10 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">日志分析</h1>
+      <div>
+        <h1 class="page-title">日志分析</h1>
+        <p class="page-subtitle">智能分析容器日志，结合 AI 大模型</p>
+      </div>
     </div>
 
     <!-- 分析表单 -->
@@ -95,7 +98,9 @@
       <!-- 匹配案例 -->
       <div v-if="result.matchedCase" class="card result-card">
         <div class="result-header">
-          <el-icon class="result-icon success"><CircleCheck /></el-icon>
+          <div class="result-icon success">
+            <el-icon><CircleCheck /></el-icon>
+          </div>
           <span class="result-title">匹配案例</span>
         </div>
         <h3>{{ result.matchedCase.title }}</h3>
@@ -108,7 +113,9 @@
       <!-- AI 分析结果 -->
       <div v-if="result.aiAnalysis" class="card result-card">
         <div class="result-header">
-          <el-icon class="result-icon info"><ChatDotRound /></el-icon>
+          <div class="result-icon info">
+            <el-icon><ChatDotRound /></el-icon>
+          </div>
           <span class="result-title">AI 分析</span>
         </div>
         <div class="ai-content">
@@ -119,7 +126,9 @@
       <!-- 日志摘要 -->
       <div class="card result-card">
         <div class="result-header">
-          <el-icon class="result-icon"><Document /></el-icon>
+          <div class="result-icon">
+            <el-icon><Document /></el-icon>
+          </div>
           <span class="result-title">日志摘要</span>
         </div>
         <pre class="log-summary">{{ result.summary || '无摘要信息' }}</pre>
@@ -128,7 +137,9 @@
       <!-- 原始日志 -->
       <div class="card result-card">
         <div class="result-header">
-          <el-icon class="result-icon"><Document /></el-icon>
+          <div class="result-icon">
+            <el-icon><Document /></el-icon>
+          </div>
           <span class="result-title">原始日志</span>
         </div>
         <div class="log-content">
@@ -238,7 +249,7 @@ onMounted(() => {
 
 .ai-hint {
   margin-left: 12px;
-  color: var(--color-text-muted);
+  color: #94A3B8;
   font-size: 13px;
 }
 
@@ -249,74 +260,82 @@ onMounted(() => {
 }
 
 .result-card {
-  padding: 20px;
+  padding: 24px;
 }
 
 .result-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
 .result-icon {
-  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  background: #F1F5F9;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .result-icon.success {
-  color: var(--color-success);
+  background: #D1FAE5;
+  color: #10B981;
 }
 
 .result-icon.info {
-  color: var(--color-info);
+  background: #E0E7FF;
+  color: #6366F1;
 }
 
 .result-title {
   font-size: 16px;
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-weight: 600;
+  color: #1E293B;
 }
 
 .result-card h3 {
-  color: var(--color-primary);
+  color: #2563EB;
   margin-bottom: 12px;
 }
 
 .result-content p {
   margin-bottom: 8px;
-  color: var(--color-text-secondary);
+  color: #64748B;
   font-size: 14px;
 }
 
 .ai-content pre {
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: #64748B;
   white-space: pre-wrap;
-  background: var(--color-bg-base);
-  padding: 12px;
-  border-radius: var(--radius-md);
+  background: #F8FAFC;
+  padding: 16px;
+  border-radius: 12px;
 }
 
 .log-summary {
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: #64748B;
   white-space: pre-wrap;
 }
 
 .log-content {
   max-height: 400px;
   overflow: auto;
-  background: var(--color-bg-base);
-  border-radius: var(--radius-md);
-  padding: 12px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 16px;
 }
 
 .log-content pre {
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
-  color: var(--color-text-secondary);
+  color: #64748B;
   white-space: pre-wrap;
   margin: 0;
 }
