@@ -89,6 +89,10 @@ public class PerformanceServiceImpl implements PerformanceService {
         ExecuteCommandResult result = new ExecuteCommandResult();
         result.setCommand(command);
 
+        // 根据命令类型设置结果类型
+        String commandType = template.getCommandType();
+        result.setResultType(determineResultType(commandType, template.getTemplate()));
+
         try (KubernetesClient client = clientFactory.getClient(
                 cluster.getApiServer(), cluster.getAuthType(), cluster.getConfig())) {
 
@@ -148,5 +152,66 @@ public class PerformanceServiceImpl implements PerformanceService {
             }
         }
         return command;
+    }
+
+    /**
+     * 根据命令类型和模板确定结果展示类型
+     *
+     * @param commandType 命令类型（jmap, jstack, arthas等）
+     * @param template 命令模板
+     * @return 结果类型（text, log, json, table, flamegraph等）
+     */
+    private String determineResultType(String commandType, String template) {
+        String lowerTemplate = template.toLowerCase();
+
+        // 日志类命令
+        if (lowerTemplate.contains("log") || lowerTemplate.contains("tail") || lowerTemplate.contains("cat /var/log")) {
+            return "log";
+        }
+
+        // JSON输出类命令
+        if (lowerTemplate.contains("--json") || lowerTemplate.contains("-x json") || lowerTemplate.contains("trace -j") || lowerTemplate.contains("watch -j")) {
+            return "json";
+        }
+
+        // 表格类命令（通常输出格式化的表格数据）
+        if (lowerTemplate.contains("table") || lowerTemplate.contains("grid") || commandType.equals("profiler")) {
+            return "table";
+        }
+
+        // 火焰图相关
+        if (lowerTemplate.contains("flame") || lowerTemplate.contains("profiler") || lowerTemplate.contains("火焰图")) {
+            return "flamegraph";
+        }
+
+        // 文件内容查看
+        if (lowerTemplate.startsWith("cat ") || lowerTemplate.startsWith("ls ") || lowerTemplate.startsWith("tail ")) {
+            if (lowerTemplate.contains(".log") || lowerTemplate.contains(".txt") || lowerTemplate.contains(".json") || lowerTemplate.contains(".xml") || lowerTemplate.contains(".yaml") || lowerTemplate.contains(".yml")) {
+                return "file";
+            }
+        }
+
+        // Arthas特定的输出类型
+        if (commandType.equals("arthas")) {
+            if (lowerTemplate.contains("dashboard") || lowerTemplate.contains("jvm") || lowerTemplate.contains("memory") || lowerTemplate.contains("thread")) {
+                return "table";
+            }
+            if (lowerTemplate.contains("jad") || lowerTemplate.contains("mc ") || lowerTemplate.contains("retransform")) {
+                return "code";
+            }
+            if (lowerTemplate.contains("watch") || lowerTemplate.contains("trace") || lowerTemplate.contains("monitor")) {
+                return "json";
+            }
+        }
+
+        // JVM命令默认
+        if (commandType.equals("jmap") || commandType.equals("jstack")) {
+            if (lowerTemplate.contains("-dump") || lowerTemplate.contains("-hprof")) {
+                return "file";
+            }
+            return "text";
+        }
+
+        return "text";
     }
 }

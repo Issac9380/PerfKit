@@ -267,7 +267,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="200">
+            <el-table-column label="操作" width="280">
               <template #default="{ row }">
                 <el-button size="small" @click="viewContainers(row)">
                   容器
@@ -275,6 +275,16 @@
                 <el-button size="small" type="primary" @click="viewLogs(row)">
                   日志
                 </el-button>
+                <el-dropdown @command="(cmd) => executeCommand(row, cmd)" split-button size="small" type="primary" @click="openCommandDialog(row)">
+                  执行命令
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item v-for="cmd in availableCommands" :key="cmd.id" :command="cmd.id">
+                        {{ cmd.name }}
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
               </template>
             </el-table-column>
           </el-table>
@@ -311,13 +321,67 @@
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
+
+    <!-- 命令执行结果对话框 -->
+    <el-dialog
+      v-model="commandDialogVisible"
+      :title="`执行命令 - ${selectedPodForCommand?.name || ''}`"
+      width="800px"
+    >
+      <div v-if="commandExecuting" class="command-loading">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        <span>命令执行中...</span>
+      </div>
+
+      <div v-else-if="commandResult" class="command-result">
+        <div class="command-info">
+          <span class="label">执行的命令:</span>
+          <code>{{ commandResult.command }}</code>
+        </div>
+
+        <!-- 根据不同结果类型显示不同内容 -->
+        <div v-if="commandResult.resultType === 'table'" class="result-table-view">
+          <pre class="output-content">{{ commandResult.output || '无输出' }}</pre>
+        </div>
+
+        <div v-else-if="commandResult.resultType === 'json'" class="result-json-view">
+          <pre class="output-content">{{ formatJson(commandResult.output) }}</pre>
+        </div>
+
+        <div v-else-if="commandResult.resultType === 'log'" class="result-log-view">
+          <pre class="output-content log-style">{{ commandResult.output || '无输出' }}</pre>
+        </div>
+
+        <div v-else-if="commandResult.resultType === 'flamegraph'" class="result-flamegraph-view">
+          <div class="flamegraph-tip">火焰图数据已生成，请查看输出内容</div>
+          <pre class="output-content">{{ commandResult.output || '无输出' }}</pre>
+        </div>
+
+        <div v-else-if="commandResult.resultType === 'code'" class="result-code-view">
+          <pre class="output-content code-style">{{ commandResult.output || '无输出' }}</pre>
+        </div>
+
+        <div v-else class="result-text-view">
+          <pre class="output-content">{{ commandResult.output || '无输出' }}</pre>
+        </div>
+
+        <div v-if="commandResult.error" class="error-section">
+          <div class="error-header">错误:</div>
+          <pre class="error-content">{{ commandResult.error }}</pre>
+        </div>
+      </div>
+
+      <div v-else class="command-select">
+        <p>请从上方选择要执行的命令</p>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Connection, FolderOpened, MoreFilled, Upload, Document } from '@element-plus/icons-vue'
+import { Plus, Connection, FolderOpened, MoreFilled, Upload, Document, Loading } from '@element-plus/icons-vue'
 import api from '@/api'
 
 const clusters = ref([])
@@ -334,6 +398,14 @@ const pods = ref([])
 const containers = ref([])
 const logContent = ref('')
 const activeTab = ref('namespaces')
+const availableCommands = ref([])
+
+// 命令执行结果相关
+const commandDialogVisible = ref(false)
+const commandResult = ref(null)
+const commandExecuting = ref(false)
+const selectedPodForCommand = ref(null)
+const selectedCommandTemplate = ref(null)
 
 // Pod 搜索、分页和批量选择
 const podSearch = ref('')
@@ -413,6 +485,16 @@ function getFileName(content) {
     return '已选择文件 (证书内容已加载)'
   }
   return content || ''
+}
+
+// 格式化JSON输出
+function formatJson(jsonStr) {
+  try {
+    const obj = JSON.parse(jsonStr)
+    return JSON.stringify(obj, null, 2)
+  } catch (e) {
+    return jsonStr
+  }
 }
 
 function getAuthTypeLabel(type) {
@@ -593,6 +675,60 @@ async function viewLogs(pod) {
   }
 }
 
+// 加载可用的命令模板
+async function loadAvailableCommands() {
+  try {
+    const res = await api.get('/analysis/templates')
+    availableCommands.value = res.data.data || []
+  } catch (error) {
+    console.error('加载命令模板失败', error)
+  }
+}
+
+// 打开命令执行对话框
+function openCommandDialog(pod) {
+  selectedPodForCommand.value = pod
+  commandDialogVisible.value = true
+  commandResult.value = null
+}
+
+// 执行命令
+async function executeCommand(pod, templateId) {
+  selectedPodForCommand.value = pod
+  selectedCommandTemplate.value = templateId
+
+  try {
+    // 先获取容器列表
+    const containerRes = await api.get(
+      `/clusters/${selectedCluster.value.id}/pods/${pod.name}/containers?namespace=${selectedNamespace.value}`
+    )
+    const containerList = containerRes.data.data || []
+    if (containerList.length === 0) {
+      ElMessage.warning('该Pod没有容器')
+      return
+    }
+
+    commandExecuting.value = true
+    commandDialogVisible.value = true
+
+    const res = await api.post('/analysis/execute', {
+      clusterId: selectedCluster.value.id,
+      namespace: selectedNamespace.value,
+      podName: pod.name,
+      containerName: containerList[0],
+      templateId: templateId,
+      params: {}
+    })
+
+    commandResult.value = res.data.data
+  } catch (error) {
+    ElMessage.error('命令执行失败')
+    console.error(error)
+  } finally {
+    commandExecuting.value = false
+  }
+}
+
 // 批量获取日志
 async function batchViewLogs() {
   if (selectedPods.value.length === 0) return
@@ -640,6 +776,7 @@ async function handleCommand(cmd, cluster) {
 
 onMounted(() => {
   loadClusters()
+  loadAvailableCommands()
 })
 </script>
 
@@ -854,5 +991,102 @@ onMounted(() => {
 
 .batch-actions .el-button {
   font-weight: 500;
+}
+
+/* 命令执行结果样式 */
+.command-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  color: #64748B;
+  font-size: 16px;
+}
+
+.command-loading .el-icon {
+  font-size: 24px;
+}
+
+.command-result {
+  padding: 0;
+}
+
+.command-result .command-info {
+  margin-bottom: 16px;
+  padding: 14px;
+  background: #F8FAFC;
+  border-radius: 10px;
+}
+
+.command-result .command-info .label {
+  color: #94A3B8;
+  margin-right: 8px;
+}
+
+.command-result .command-info code {
+  font-family: 'JetBrains Mono', monospace;
+  color: #2563EB;
+}
+
+.command-result .output-content {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 16px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #64748B;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.command-result .log-style {
+  background: #1E293B;
+  color: #10B981;
+}
+
+.command-result .code-style {
+  background: #F1F5F9;
+  color: #7C3AED;
+}
+
+.command-result .error-section {
+  margin-top: 16px;
+}
+
+.command-result .error-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #EF4444;
+  margin-bottom: 8px;
+}
+
+.command-result .error-content {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 16px;
+  background: #FEE2E2;
+  border-radius: 12px;
+  color: #EF4444;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.result-flamegraph-view .flamegraph-tip {
+  padding: 12px;
+  background: #FEF3C7;
+  color: #D97706;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.command-select {
+  text-align: center;
+  padding: 40px;
+  color: #94A3B8;
 }
 </style>

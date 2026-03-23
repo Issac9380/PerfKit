@@ -106,10 +106,78 @@
       </div>
 
       <div class="result-content">
-        <div v-if="result.success" class="output-section">
-          <div class="output-header">输出:</div>
-          <pre class="output-content">{{ result.output || '无输出' }}</pre>
-        </div>
+        <!-- 根据结果类型显示不同内容 -->
+        <template v-if="result.resultType === 'table'">
+          <div class="output-section">
+            <div class="output-header">
+              <span>表格视图</span>
+              <el-tag size="small" type="info">表格</el-tag>
+            </div>
+            <pre class="output-content table-view">{{ result.output || '无输出' }}</pre>
+          </div>
+        </template>
+
+        <template v-else-if="result.resultType === 'json'">
+          <div class="output-section">
+            <div class="output-header">
+              <span>JSON 视图</span>
+              <el-tag size="small" type="success">JSON</el-tag>
+            </div>
+            <pre class="output-content json-view">{{ formatJson(result.output) }}</pre>
+          </div>
+        </template>
+
+        <template v-else-if="result.resultType === 'log'">
+          <div class="output-section">
+            <div class="output-header">
+              <span>日志视图</span>
+              <el-tag size="small" type="warning">日志</el-tag>
+            </div>
+            <pre class="output-content log-view">{{ result.output || '无输出' }}</pre>
+          </div>
+        </template>
+
+        <template v-else-if="result.resultType === 'flamegraph'">
+          <div class="output-section">
+            <div class="output-header">
+              <span>火焰图</span>
+              <el-tag size="small" type="danger">火焰图</el-tag>
+            </div>
+            <div class="flamegraph-tip">火焰图数据已生成</div>
+            <pre class="output-content flamegraph-view">{{ result.output || '无输出' }}</pre>
+          </div>
+        </template>
+
+        <template v-else-if="result.resultType === 'code'">
+          <div class="output-section">
+            <div class="output-header">
+              <span>代码视图</span>
+              <el-tag size="small" type="info">代码</el-tag>
+            </div>
+            <pre class="output-content code-view">{{ result.output || '无输出' }}</pre>
+          </div>
+        </template>
+
+        <template v-else-if="result.resultType === 'file'">
+          <div class="output-section">
+            <div class="output-header">
+              <span>文件内容</span>
+              <el-tag size="small" type="primary">文件</el-tag>
+            </div>
+            <pre class="output-content file-view">{{ result.output || '无输出' }}</pre>
+          </div>
+        </template>
+
+        <template v-else>
+          <!-- 默认文本视图 -->
+          <div v-if="result.success" class="output-section">
+            <div class="output-header">
+              <span>输出</span>
+              <el-tag size="small">文本</el-tag>
+            </div>
+            <pre class="output-content">{{ result.output || '无输出' }}</pre>
+          </div>
+        </template>
 
         <div v-if="result.error" class="error-section">
           <div class="error-header">错误:</div>
@@ -235,6 +303,16 @@ async function executeCommand() {
   }
 }
 
+// 格式化JSON输出
+function formatJson(jsonStr) {
+  try {
+    const obj = JSON.parse(jsonStr)
+    return JSON.stringify(obj, null, 2)
+  } catch (e) {
+    return jsonStr
+  }
+}
+
 onMounted(() => {
   loadClusters()
   loadTemplates()
@@ -316,6 +394,13 @@ onMounted(() => {
 
 .output-header {
   color: #10B981;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.output-header .el-tag {
+  margin-left: auto;
 }
 
 .error-header {
@@ -343,5 +428,47 @@ onMounted(() => {
 .no-output {
   color: #94A3B8;
   font-style: italic;
+}
+
+/* 不同结果类型的样式 */
+.output-content.table-view {
+  background: #F8FAFC;
+  color: #1E293B;
+  white-space: pre;
+}
+
+.output-content.json-view {
+  background: #1E293B;
+  color: #10B981;
+}
+
+.output-content.log-view {
+  background: #1E293B;
+  color: #22C55E;
+  line-height: 1.6;
+}
+
+.output-content.code-view {
+  background: #F1F5F9;
+  color: #7C3AED;
+}
+
+.output-content.file-view {
+  background: #F8FAFC;
+  color: #64748B;
+}
+
+.output-content.flamegraph-view {
+  background: #1E293B;
+  color: #F59E0B;
+}
+
+.flamegraph-tip {
+  padding: 12px;
+  background: #FEF3C7;
+  color: #D97706;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
 }
 </style>

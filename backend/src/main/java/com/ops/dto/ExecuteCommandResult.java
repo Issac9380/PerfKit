@@ -25,6 +25,19 @@ public class ExecuteCommandResult {
     private boolean success;
 
     /**
+     * 结果类型
+     * 用于前端区分不同的展示方式:
+     * - text: 普通文本输出（默认）
+     * - log: 日志格式输出，带时间戳高亮
+     * - json: JSON格式输出，带语法高亮
+     * - table: 表格形式展示
+     * - flamegraph: 火焰图数据
+     * - file: 文件内容展示
+     * - image: 图片展示（Base64编码）
+     */
+    private String resultType;
+
+    /**
      * 命令输出
      * 命令执行的标准输出内容
      */
@@ -36,4 +49,10 @@ public class ExecuteCommandResult {
      * 执行成功时为空
      */
     private String error;
+
+    /**
+     * 额外数据
+     * 用于传递特殊类型的额外数据，如火焰图数据、文件元信息等
+     */
+    private Object extraData;
 }
