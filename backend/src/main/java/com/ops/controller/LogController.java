@@ -7,6 +7,7 @@ import com.ops.service.AuditService;
 import com.ops.service.LogAnalysisService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/log")
 @RequiredArgsConstructor
+@Slf4j
 public class LogController {
 
     private final LogAnalysisService logAnalysisService;
@@ -38,9 +40,15 @@ public class LogController {
      */
     @PostMapping("/analyze")
     public Result<LogAnalyzeResult> analyze(@RequestBody LogAnalyzeRequest request, HttpServletRequest httpRequest) {
-        LogAnalyzeResult result = logAnalysisService.analyze(request);
-        auditLog("LOG_ANALYZE", "log", request.getClusterId(), request.toString(), httpRequest);
-        return Result.success(result);
+        log.debug("[LogController.analyze] Enter - request={}", request);
+        try {
+            LogAnalyzeResult result = logAnalysisService.analyze(request);
+            auditLog("LOG_ANALYZE", "log", request.getClusterId(), request.toString(), httpRequest);
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("[LogController.analyze] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -54,9 +62,15 @@ public class LogController {
      */
     @GetMapping("/containers/{clusterId}")
     public Result<?> getContainers(@PathVariable Long clusterId, @RequestParam String namespace, HttpServletRequest request) {
-        auditLog("LIST_CONTAINERS", "log", clusterId, "namespace=" + namespace, request);
-        // TODO: 返回可分析的容器列表
-        return Result.success(List.of());
+        log.debug("[LogController.getContainers] Enter - clusterId={}, namespace={}", clusterId, namespace);
+        try {
+            auditLog("LIST_CONTAINERS", "log", clusterId, "namespace=" + namespace, request);
+            // TODO: 返回可分析的容器列表
+            return Result.success(List.of());
+        } catch (Exception e) {
+            log.error("[LogController.getContainers] Error", e);
+            throw e;
+        }
     }
 
     private void auditLog(String action, String resourceType, Long resourceId, String requestParams, HttpServletRequest request) {

@@ -150,6 +150,9 @@ public class K8sServiceImpl implements K8sService {
     public List<String> getNamespaces(Long id) {
         // 查询集群配置
         K8sCluster cluster = clusterMapper.selectById(id);
+        if (cluster == null) {
+            throw new BusinessException(404, "集群不存在");
+        }
         try (KubernetesClient client = clientFactory.getClient(
                 cluster.getApiServer(), cluster.getAuthType(), cluster.getConfig())) {
             // 获取命名空间列表并提取名称
@@ -170,6 +173,9 @@ public class K8sServiceImpl implements K8sService {
     public List<String> getPods(Long id, String namespace) {
         // 查询集群配置
         K8sCluster cluster = clusterMapper.selectById(id);
+        if (cluster == null) {
+            throw new BusinessException(404, "集群不存在");
+        }
         try (KubernetesClient client = clientFactory.getClient(
                 cluster.getApiServer(), cluster.getAuthType(), cluster.getConfig())) {
             // 获取指定命名空间下的Pod列表
@@ -192,10 +198,16 @@ public class K8sServiceImpl implements K8sService {
     public List<String> getContainers(Long id, String namespace, String podName) {
         // 查询集群配置
         K8sCluster cluster = clusterMapper.selectById(id);
+        if (cluster == null) {
+            throw new BusinessException(404, "集群不存在");
+        }
         try (KubernetesClient client = clientFactory.getClient(
                 cluster.getApiServer(), cluster.getAuthType(), cluster.getConfig())) {
             // 获取Pod详情并提取容器名称
             Pod pod = client.pods().inNamespace(namespace).withName(podName).get();
+            if (pod == null) {
+                throw new BusinessException(404, "Pod不存在: " + podName);
+            }
             return pod.getSpec().getContainers().stream()
                     .map(c -> c.getName())
                     .collect(Collectors.toList());
@@ -215,6 +227,9 @@ public class K8sServiceImpl implements K8sService {
     public String getLogs(Long id, String namespace, String podName, String containerName) {
         // 查询集群配置
         K8sCluster cluster = clusterMapper.selectById(id);
+        if (cluster == null) {
+            throw new BusinessException(404, "集群不存在");
+        }
         try (KubernetesClient client = clientFactory.getClient(
                 cluster.getApiServer(), cluster.getAuthType(), cluster.getConfig())) {
             // 获取指定容器的日志
@@ -238,6 +253,9 @@ public class K8sServiceImpl implements K8sService {
     public String getBatchLogs(Long id, String namespace, List<String> podNames) {
         // 查询集群配置
         K8sCluster cluster = clusterMapper.selectById(id);
+        if (cluster == null) {
+            throw new BusinessException(404, "集群不存在");
+        }
         // 用于存储汇总后的日志结果
         StringBuilder result = new StringBuilder();
 
@@ -249,11 +267,15 @@ public class K8sServiceImpl implements K8sService {
                 // 添加Pod分隔标记
                 result.append("========== Pod: ").append(podName).append(" ==========\n");
                 try {
+                    // 获取Pod信息
+                    Pod pod = client.pods().inNamespace(namespace).withName(podName).get();
+                    if (pod == null) {
+                        result.append("Pod not found\n");
+                        continue;
+                    }
+
                     // 获取Pod的第一个容器名称
-                    List<String> containers = client.pods().inNamespace(namespace)
-                            .withName(podName)
-                            .get()
-                            .getSpec().getContainers().stream()
+                    List<String> containers = pod.getSpec().getContainers().stream()
                             .map(c -> c.getName())
                             .collect(Collectors.toList());
 

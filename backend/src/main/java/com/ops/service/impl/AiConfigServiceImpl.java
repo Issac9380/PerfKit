@@ -5,6 +5,7 @@ import com.ops.entity.AiConfig;
 import com.ops.mapper.AiConfigMapper;
 import com.ops.service.AiConfigService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.List;
  * @author Issac Song
  * @date 2026-03-23
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AiConfigServiceImpl implements AiConfigService {
@@ -35,7 +37,15 @@ public class AiConfigServiceImpl implements AiConfigService {
      */
     @Override
     public List<AiConfig> list() {
-        return aiConfigMapper.selectList(null);
+        log.debug("[AiConfigServiceImpl.list] Enter");
+        try {
+            List<AiConfig> configs = aiConfigMapper.selectList(null);
+            log.debug("[AiConfigServiceImpl.list] Success - count: {}", configs.size());
+            return configs;
+        } catch (Exception e) {
+            log.error("[AiConfigServiceImpl.list] Error: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -46,7 +56,15 @@ public class AiConfigServiceImpl implements AiConfigService {
      */
     @Override
     public AiConfig getById(Long id) {
-        return aiConfigMapper.selectById(id);
+        log.debug("[AiConfigServiceImpl.getById] Enter - id: {}", id);
+        try {
+            AiConfig config = aiConfigMapper.selectById(id);
+            log.debug("[AiConfigServiceImpl.getById] Success - id: {}", id);
+            return config;
+        } catch (Exception e) {
+            log.error("[AiConfigServiceImpl.getById] Error - id: {}, error: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -58,18 +76,25 @@ public class AiConfigServiceImpl implements AiConfigService {
      */
     @Override
     public AiConfig create(AiConfig config) {
-        // 如果设置为默认，先取消其他默认
-        if (Boolean.TRUE.equals(config.getIsDefault())) {
-            clearDefault();
+        log.debug("[AiConfigServiceImpl.create] Enter - name: {}", config.getName());
+        try {
+            // 如果设置为默认，先取消其他默认
+            if (Boolean.TRUE.equals(config.getIsDefault())) {
+                clearDefault();
+            }
+            // 设置默认状态为激活
+            config.setStatus("ACTIVE");
+            // 设置创建时间和更新时间
+            config.setCreatedAt(LocalDateTime.now());
+            config.setUpdatedAt(LocalDateTime.now());
+            // 插入数据库
+            aiConfigMapper.insert(config);
+            log.debug("[AiConfigServiceImpl.create] Success - id: {}, name: {}", config.getId(), config.getName());
+            return config;
+        } catch (Exception e) {
+            log.error("[AiConfigServiceImpl.create] Error - name: {}, error: {}", config.getName(), e.getMessage(), e);
+            throw e;
         }
-        // 设置默认状态为激活
-        config.setStatus("ACTIVE");
-        // 设置创建时间和更新时间
-        config.setCreatedAt(LocalDateTime.now());
-        config.setUpdatedAt(LocalDateTime.now());
-        // 插入数据库
-        aiConfigMapper.insert(config);
-        return config;
     }
 
     /**
@@ -83,23 +108,31 @@ public class AiConfigServiceImpl implements AiConfigService {
      */
     @Override
     public AiConfig update(Long id, AiConfig config) {
-        // 查询原配置是否存在
-        AiConfig existing = aiConfigMapper.selectById(id);
-        if (existing == null) {
-            throw new RuntimeException("AI配置不存在");
-        }
+        log.debug("[AiConfigServiceImpl.update] Enter - id: {}", id);
+        try {
+            // 查询原配置是否存在
+            AiConfig existing = aiConfigMapper.selectById(id);
+            if (existing == null) {
+                log.warn("[AiConfigServiceImpl.update] Config not found - id: {}", id);
+                throw new RuntimeException("AI配置不存在");
+            }
 
-        // 如果设置为默认，先取消其他默认
-        if (Boolean.TRUE.equals(config.getIsDefault())) {
-            clearDefault();
-        }
+            // 如果设置为默认，先取消其他默认
+            if (Boolean.TRUE.equals(config.getIsDefault())) {
+                clearDefault();
+            }
 
-        // 设置ID和更新时间
-        config.setId(id);
-        config.setUpdatedAt(LocalDateTime.now());
-        // 更新数据库
-        aiConfigMapper.updateById(config);
-        return config;
+            // 设置ID和更新时间
+            config.setId(id);
+            config.setUpdatedAt(LocalDateTime.now());
+            // 更新数据库
+            aiConfigMapper.updateById(config);
+            log.debug("[AiConfigServiceImpl.update] Success - id: {}", id);
+            return config;
+        } catch (Exception e) {
+            log.error("[AiConfigServiceImpl.update] Error - id: {}, error: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -109,7 +142,14 @@ public class AiConfigServiceImpl implements AiConfigService {
      */
     @Override
     public void delete(Long id) {
-        aiConfigMapper.deleteById(id);
+        log.debug("[AiConfigServiceImpl.delete] Enter - id: {}", id);
+        try {
+            aiConfigMapper.deleteById(id);
+            log.debug("[AiConfigServiceImpl.delete] Success - id: {}", id);
+        } catch (Exception e) {
+            log.error("[AiConfigServiceImpl.delete] Error - id: {}, error: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -120,10 +160,18 @@ public class AiConfigServiceImpl implements AiConfigService {
      */
     @Override
     public AiConfig getDefault() {
-        LambdaQueryWrapper<AiConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiConfig::getIsDefault, true)
-               .eq(AiConfig::getStatus, "ACTIVE");
-        return aiConfigMapper.selectOne(wrapper);
+        log.debug("[AiConfigServiceImpl.getDefault] Enter");
+        try {
+            LambdaQueryWrapper<AiConfig> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AiConfig::getIsDefault, true)
+                   .eq(AiConfig::getStatus, "ACTIVE");
+            AiConfig config = aiConfigMapper.selectOne(wrapper);
+            log.debug("[AiConfigServiceImpl.getDefault] Success - found: {}", config != null);
+            return config;
+        } catch (Exception e) {
+            log.error("[AiConfigServiceImpl.getDefault] Error: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -135,15 +183,22 @@ public class AiConfigServiceImpl implements AiConfigService {
     @Override
     @Transactional
     public void setDefault(Long id) {
-        // 清除所有现有默认配置
-        clearDefault();
-        // 创建更新对象
-        AiConfig config = new AiConfig();
-        config.setId(id);
-        config.setIsDefault(true);
-        config.setUpdatedAt(LocalDateTime.now());
-        // 更新数据库
-        aiConfigMapper.updateById(config);
+        log.debug("[AiConfigServiceImpl.setDefault] Enter - id: {}", id);
+        try {
+            // 清除所有现有默认配置
+            clearDefault();
+            // 创建更新对象
+            AiConfig config = new AiConfig();
+            config.setId(id);
+            config.setIsDefault(true);
+            config.setUpdatedAt(LocalDateTime.now());
+            // 更新数据库
+            aiConfigMapper.updateById(config);
+            log.debug("[AiConfigServiceImpl.setDefault] Success - id: {}", id);
+        } catch (Exception e) {
+            log.error("[AiConfigServiceImpl.setDefault] Error - id: {}, error: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -151,11 +206,18 @@ public class AiConfigServiceImpl implements AiConfigService {
      * 将所有isDefault为true的配置设置为false
      */
     private void clearDefault() {
-        LambdaQueryWrapper<AiConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(AiConfig::getIsDefault, true);
-        // 创建更新实体，将isDefault设为false
-        AiConfig oldDefault = new AiConfig();
-        oldDefault.setIsDefault(false);
-        aiConfigMapper.update(oldDefault, wrapper);
+        log.debug("[AiConfigServiceImpl.clearDefault] Enter");
+        try {
+            LambdaQueryWrapper<AiConfig> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AiConfig::getIsDefault, true);
+            // 创建更新实体，将isDefault设为false
+            AiConfig oldDefault = new AiConfig();
+            oldDefault.setIsDefault(false);
+            aiConfigMapper.update(oldDefault, wrapper);
+            log.debug("[AiConfigServiceImpl.clearDefault] Success");
+        } catch (Exception e) {
+            log.error("[AiConfigServiceImpl.clearDefault] Error: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 }

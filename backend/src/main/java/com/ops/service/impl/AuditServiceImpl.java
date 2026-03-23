@@ -4,6 +4,7 @@ import com.ops.entity.AuditLog;
 import com.ops.mapper.AuditLogMapper;
 import com.ops.service.AuditService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
  * @author Issac Song
  * @date 2026-03-23
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuditServiceImpl implements AuditService {
@@ -36,21 +38,30 @@ public class AuditServiceImpl implements AuditService {
      */
     @Override
     public void log(Long userId, String action, String resourceType, Long resourceId, String requestParams, String ipAddress) {
-        // 创建审计日志实体
-        AuditLog auditLog = new AuditLog();
-        // 设置用户信息
-        auditLog.setUserId(userId);
-        // 设置操作类型
-        auditLog.setAction(action);
-        // 设置资源类型
-        auditLog.setResourceType(resourceType);
-        // 设置资源ID
-        auditLog.setResourceId(resourceId);
-        // 设置请求参数
-        auditLog.setRequestParams(requestParams);
-        // 设置客户端IP
-        auditLog.setIpAddress(ipAddress);
-        // 持久化到数据库
-        auditLogMapper.insert(auditLog);
+        log.debug("[AuditServiceImpl.log] Enter - userId: {}, action: {}, resourceType: {}, resourceId: {}",
+                userId, action, resourceType, resourceId);
+        try {
+            // 创建审计日志实体
+            AuditLog auditLog = new AuditLog();
+            // 设置用户信息
+            auditLog.setUserId(userId);
+            // 设置操作类型
+            auditLog.setAction(action);
+            // 设置资源类型
+            auditLog.setResourceType(resourceType);
+            // 设置资源ID
+            auditLog.setResourceId(resourceId);
+            // 设置请求参数
+            auditLog.setRequestParams(requestParams);
+            // 设置客户端IP
+            auditLog.setIpAddress(ipAddress);
+            // 持久化到数据库
+            auditLogMapper.insert(auditLog);
+            log.debug("[AuditServiceImpl.log] Success - action: {}, resourceType: {}", action, resourceType);
+        } catch (Exception e) {
+            log.error("[AuditServiceImpl.log] Error - action: {}, resourceType: {}, error: {}",
+                    action, resourceType, e.getMessage(), e);
+            // 审计日志记录失败不应影响主业务，这里仅记录日志
+        }
     }
 }

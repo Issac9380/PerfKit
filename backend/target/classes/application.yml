@@ -11,19 +11,17 @@ spring:
     init:
       mode: always
       schema-locations: classpath:schema.sql
+  # 使用 Log4j2 日志框架
+  logging:
+    config: classpath:log4j2.xml
 
-# 日志配置
+# 日志配置（Log4j2 通过 log4j2.xml 配置）
 logging:
   level:
     root: INFO
     com.ops: DEBUG
-    org.springframework.web: INFO
-    org.springframework.security: DEBUG
   file:
     name: logs/ops-platform.log
-  pattern:
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
@@ -35,8 +33,8 @@ mybatis-plus:
       id-type: auto
 
 jwt:
-  secret: ops-platform-secret-key-change-in-production
-  expiration: 86400000
+  secret: ${JWT_SECRET:ops-platform-secret-key-change-in-production}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 app:
   upload:

@@ -6,6 +6,7 @@ import com.ops.entity.JdkVersion;
 import com.ops.entity.VersionMapping;
 import com.ops.service.VersionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,6 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/versions")
 @RequiredArgsConstructor
+@Slf4j
 public class VersionController {
 
     private final VersionService versionService;
@@ -33,7 +35,13 @@ public class VersionController {
      */
     @GetMapping("/jdk")
     public Result<List<JdkVersion>> listJdkVersions() {
-        return Result.success(versionService.listJdkVersions());
+        log.debug("[VersionController.listJdkVersions] Enter");
+        try {
+            return Result.success(versionService.listJdkVersions());
+        } catch (Exception e) {
+            log.error("[VersionController.listJdkVersions] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -45,7 +53,13 @@ public class VersionController {
      */
     @PostMapping("/jdk")
     public Result<JdkVersion> uploadJdkVersion(@RequestParam("file") MultipartFile file) {
-        return Result.success(versionService.uploadJdkVersion(file));
+        log.debug("[VersionController.uploadJdkVersion] Enter - filename={}", file.getOriginalFilename());
+        try {
+            return Result.success(versionService.uploadJdkVersion(file));
+        } catch (Exception e) {
+            log.error("[VersionController.uploadJdkVersion] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -57,8 +71,14 @@ public class VersionController {
      */
     @DeleteMapping("/jdk/{id}")
     public Result<Void> deleteJdkVersion(@PathVariable Long id) {
-        versionService.deleteJdkVersion(id);
-        return Result.success();
+        log.debug("[VersionController.deleteJdkVersion] Enter - id={}", id);
+        try {
+            versionService.deleteJdkVersion(id);
+            return Result.success();
+        } catch (Exception e) {
+            log.error("[VersionController.deleteJdkVersion] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -69,7 +89,13 @@ public class VersionController {
      */
     @GetMapping("/arthas")
     public Result<List<ArthasVersion>> listArthasVersions() {
-        return Result.success(versionService.listArthasVersions());
+        log.debug("[VersionController.listArthasVersions] Enter");
+        try {
+            return Result.success(versionService.listArthasVersions());
+        } catch (Exception e) {
+            log.error("[VersionController.listArthasVersions] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -81,7 +107,13 @@ public class VersionController {
      */
     @PostMapping("/arthas")
     public Result<ArthasVersion> uploadArthasVersion(@RequestParam("file") MultipartFile file) {
-        return Result.success(versionService.uploadArthasVersion(file));
+        log.debug("[VersionController.uploadArthasVersion] Enter - filename={}", file.getOriginalFilename());
+        try {
+            return Result.success(versionService.uploadArthasVersion(file));
+        } catch (Exception e) {
+            log.error("[VersionController.uploadArthasVersion] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -93,8 +125,14 @@ public class VersionController {
      */
     @DeleteMapping("/arthas/{id}")
     public Result<Void> deleteArthasVersion(@PathVariable Long id) {
-        versionService.deleteArthasVersion(id);
-        return Result.success();
+        log.debug("[VersionController.deleteArthasVersion] Enter - id={}", id);
+        try {
+            versionService.deleteArthasVersion(id);
+            return Result.success();
+        } catch (Exception e) {
+            log.error("[VersionController.deleteArthasVersion] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -105,7 +143,13 @@ public class VersionController {
      */
     @GetMapping("/mappings")
     public Result<List<VersionMapping>> listMappings() {
-        return Result.success(versionService.listMappings());
+        log.debug("[VersionController.listMappings] Enter");
+        try {
+            return Result.success(versionService.listMappings());
+        } catch (Exception e) {
+            log.error("[VersionController.listMappings] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -128,7 +172,14 @@ public class VersionController {
             @RequestParam String namespace,
             @RequestParam String podName,
             @RequestParam String containerName) {
-        versionService.deployToContainer(versionId, type, clusterId, namespace, podName, containerName);
-        return Result.success();
+        log.debug("[VersionController.deployToContainer] Enter - versionId={}, type={}, clusterId={}, namespace={}, podName={}, containerName={}",
+                versionId, type, clusterId, namespace, podName, containerName);
+        try {
+            versionService.deployToContainer(versionId, type, clusterId, namespace, podName, containerName);
+            return Result.success();
+        } catch (Exception e) {
+            log.error("[VersionController.deployToContainer] Error", e);
+            throw e;
+        }
     }
 }

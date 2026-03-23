@@ -4,6 +4,7 @@ import com.ops.common.Result;
 import com.ops.entity.AiConfig;
 import com.ops.service.AiConfigService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/ai/config")
 @RequiredArgsConstructor
+@Slf4j
 public class AiConfigController {
 
     private final AiConfigService aiConfigService;
@@ -30,7 +32,13 @@ public class AiConfigController {
      */
     @GetMapping
     public Result<List<AiConfig>> list() {
-        return Result.success(aiConfigService.list());
+        log.debug("[AiConfigController.list] Enter");
+        try {
+            return Result.success(aiConfigService.list());
+        } catch (Exception e) {
+            log.error("[AiConfigController.list] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -42,7 +50,13 @@ public class AiConfigController {
      */
     @GetMapping("/{id}")
     public Result<AiConfig> get(@PathVariable Long id) {
-        return Result.success(aiConfigService.getById(id));
+        log.debug("[AiConfigController.get] Enter - id={}", id);
+        try {
+            return Result.success(aiConfigService.getById(id));
+        } catch (Exception e) {
+            log.error("[AiConfigController.get] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -53,7 +67,13 @@ public class AiConfigController {
      */
     @GetMapping("/default")
     public Result<AiConfig> getDefault() {
-        return Result.success(aiConfigService.getDefault());
+        log.debug("[AiConfigController.getDefault] Enter");
+        try {
+            return Result.success(aiConfigService.getDefault());
+        } catch (Exception e) {
+            log.error("[AiConfigController.getDefault] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -65,7 +85,13 @@ public class AiConfigController {
      */
     @PostMapping
     public Result<AiConfig> create(@RequestBody AiConfig config) {
-        return Result.success(aiConfigService.create(config));
+        log.debug("[AiConfigController.create] Enter - config={}", config);
+        try {
+            return Result.success(aiConfigService.create(config));
+        } catch (Exception e) {
+            log.error("[AiConfigController.create] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -78,7 +104,13 @@ public class AiConfigController {
      */
     @PutMapping("/{id}")
     public Result<AiConfig> update(@PathVariable Long id, @RequestBody AiConfig config) {
-        return Result.success(aiConfigService.update(id, config));
+        log.debug("[AiConfigController.update] Enter - id={}, config={}", id, config);
+        try {
+            return Result.success(aiConfigService.update(id, config));
+        } catch (Exception e) {
+            log.error("[AiConfigController.update] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -90,8 +122,14 @@ public class AiConfigController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
-        aiConfigService.delete(id);
-        return Result.success(null);
+        log.debug("[AiConfigController.delete] Enter - id={}", id);
+        try {
+            aiConfigService.delete(id);
+            return Result.success(null);
+        } catch (Exception e) {
+            log.error("[AiConfigController.delete] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -103,7 +141,13 @@ public class AiConfigController {
      */
     @PutMapping("/{id}/default")
     public Result<Void> setDefault(@PathVariable Long id) {
-        aiConfigService.setDefault(id);
-        return Result.success(null);
+        log.debug("[AiConfigController.setDefault] Enter - id={}", id);
+        try {
+            aiConfigService.setDefault(id);
+            return Result.success(null);
+        } catch (Exception e) {
+            log.error("[AiConfigController.setDefault] Error", e);
+            throw e;
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.ops.common.Result;
 import com.ops.entity.CommandTemplate;
 import com.ops.mapper.CommandTemplateMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/analysis/templates")
 @RequiredArgsConstructor
+@Slf4j
 public class CommandTemplateController {
 
     private final CommandTemplateMapper commandTemplateMapper;
@@ -31,7 +33,13 @@ public class CommandTemplateController {
      */
     @GetMapping
     public Result<List<CommandTemplate>> list() {
-        return Result.success(commandTemplateMapper.selectList(null));
+        log.debug("[CommandTemplateController.list] Enter");
+        try {
+            return Result.success(commandTemplateMapper.selectList(null));
+        } catch (Exception e) {
+            log.error("[CommandTemplateController.list] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -43,7 +51,13 @@ public class CommandTemplateController {
      */
     @GetMapping("/{id}")
     public Result<CommandTemplate> get(@PathVariable Long id) {
-        return Result.success(commandTemplateMapper.selectById(id));
+        log.debug("[CommandTemplateController.get] Enter - id={}", id);
+        try {
+            return Result.success(commandTemplateMapper.selectById(id));
+        } catch (Exception e) {
+            log.error("[CommandTemplateController.get] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -55,9 +69,15 @@ public class CommandTemplateController {
      */
     @PostMapping
     public Result<CommandTemplate> create(@RequestBody CommandTemplate template) {
-        template.setCreatedAt(LocalDateTime.now());
-        commandTemplateMapper.insert(template);
-        return Result.success(template);
+        log.debug("[CommandTemplateController.create] Enter - template={}", template);
+        try {
+            template.setCreatedAt(LocalDateTime.now());
+            commandTemplateMapper.insert(template);
+            return Result.success(template);
+        } catch (Exception e) {
+            log.error("[CommandTemplateController.create] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -70,9 +90,15 @@ public class CommandTemplateController {
      */
     @PutMapping("/{id}")
     public Result<CommandTemplate> update(@PathVariable Long id, @RequestBody CommandTemplate template) {
-        template.setId(id);
-        commandTemplateMapper.updateById(template);
-        return Result.success(template);
+        log.debug("[CommandTemplateController.update] Enter - id={}, template={}", id, template);
+        try {
+            template.setId(id);
+            commandTemplateMapper.updateById(template);
+            return Result.success(template);
+        } catch (Exception e) {
+            log.error("[CommandTemplateController.update] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -84,7 +110,13 @@ public class CommandTemplateController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
-        commandTemplateMapper.deleteById(id);
-        return Result.success(null);
+        log.debug("[CommandTemplateController.delete] Enter - id={}", id);
+        try {
+            commandTemplateMapper.deleteById(id);
+            return Result.success(null);
+        } catch (Exception e) {
+            log.error("[CommandTemplateController.delete] Error", e);
+            throw e;
+        }
     }
 }

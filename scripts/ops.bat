@@ -7,12 +7,15 @@ set "ACTION=%~1"
 if "%ACTION%"=="" set "ACTION=help"
 
 cd /d "%SCRIPT_DIR%"
+cd ..
+set "PROJECT_DIR=%CD%"
+cd /d "%SCRIPT_DIR%"
 
 goto :%ACTION%
 
 :help
 echo ========================================
-echo   研发作业平台 - 管理脚本
+echo   PerfKit 研发作业平台 - 管理脚本
 echo ========================================
 echo.
 echo 用法: ops.bat [command]
@@ -37,7 +40,7 @@ echo ========================================
 echo.
 
 echo [1/2] 启动后端...
-cd /d "%SCRIPT_DIR%backend"
+cd /d "%PROJECT_DIR%\backend"
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8080 " ^| findstr "LISTENING"') do (
     echo 后端端口 8080 已被占用，PID: %%a
     taskkill /F /PID %%a >nul 2>&1
@@ -48,7 +51,7 @@ start "Backend" cmd /k "cd /d "%CD%" && mvn spring-boot:run"
 cd /d "%SCRIPT_DIR%"
 echo.
 echo [2/2] 启动前端...
-cd /d "%SCRIPT_DIR%frontend"
+cd /d "%PROJECT_DIR%\frontend"
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000 " ^| findstr "LISTENING"') do (
     echo 前端端口 3000 已被占用，PID: %%a
     taskkill /F /PID %%a >nul 2>&1
@@ -105,13 +108,13 @@ timeout /t 3 /nobreak >nul
 
 echo.
 echo [2/3] 启动后端...
-cd /d "%SCRIPT_DIR%backend"
+cd /d "%PROJECT_DIR%\backend"
 start "Backend" cmd /k "cd /d "%CD%" && mvn spring-boot:run"
 
 cd /d "%SCRIPT_DIR%"
 echo.
 echo [3/3] 启动前端...
-cd /d "%SCRIPT_DIR%frontend"
+cd /d "%PROJECT_DIR%\frontend"
 start "Frontend" cmd /k "cd /d "%CD%" && npm run dev"
 
 cd /d "%SCRIPT_DIR%"

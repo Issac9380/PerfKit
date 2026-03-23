@@ -8,6 +8,7 @@ import com.ops.service.K8sService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import java.util.List;
  * @author Issac Song
  * @date 2026-03-23
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/clusters")
 @RequiredArgsConstructor
@@ -39,8 +41,16 @@ public class ClusterController {
      */
     @GetMapping
     public Result<List<K8sCluster>> list(HttpServletRequest request) {
-        auditLog("LIST", "cluster", null, null, request);
-        return Result.success(k8sService.list());
+        log.debug("[ClusterController.list] Enter");
+        try {
+            List<K8sCluster> clusters = k8sService.list();
+            auditLog("LIST", "cluster", null, null, request);
+            log.debug("[ClusterController.list] Success - count: {}", clusters.size());
+            return Result.success(clusters);
+        } catch (Exception e) {
+            log.error("[ClusterController.list] Error: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -53,9 +63,16 @@ public class ClusterController {
      */
     @PostMapping
     public Result<K8sCluster> create(@Valid @RequestBody ClusterRequest request, HttpServletRequest httpRequest) {
-        K8sCluster cluster = k8sService.create(request);
-        auditLog("CREATE", "cluster", cluster.getId(), request.toString(), httpRequest);
-        return Result.success(cluster);
+        log.debug("[ClusterController.create] Enter - name: {}", request.getName());
+        try {
+            K8sCluster cluster = k8sService.create(request);
+            auditLog("CREATE", "cluster", cluster.getId(), request.toString(), httpRequest);
+            log.debug("[ClusterController.create] Success - id: {}, name: {}", cluster.getId(), cluster.getName());
+            return Result.success(cluster);
+        } catch (Exception e) {
+            log.error("[ClusterController.create] Error - name: {}, error: {}", request.getName(), e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -69,9 +86,16 @@ public class ClusterController {
      */
     @PutMapping("/{id}")
     public Result<K8sCluster> update(@PathVariable Long id, @Valid @RequestBody ClusterRequest request, HttpServletRequest httpRequest) {
-        K8sCluster cluster = k8sService.update(id, request);
-        auditLog("UPDATE", "cluster", id, request.toString(), httpRequest);
-        return Result.success(cluster);
+        log.debug("[ClusterController.update] Enter - id: {}", id);
+        try {
+            K8sCluster cluster = k8sService.update(id, request);
+            auditLog("UPDATE", "cluster", id, request.toString(), httpRequest);
+            log.debug("[ClusterController.update] Success - id: {}", id);
+            return Result.success(cluster);
+        } catch (Exception e) {
+            log.error("[ClusterController.update] Error - id: {}, error: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -84,9 +108,16 @@ public class ClusterController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id, HttpServletRequest request) {
-        k8sService.delete(id);
-        auditLog("DELETE", "cluster", id, null, request);
-        return Result.success();
+        log.debug("[ClusterController.delete] Enter - id: {}", id);
+        try {
+            k8sService.delete(id);
+            auditLog("DELETE", "cluster", id, null, request);
+            log.debug("[ClusterController.delete] Success - id: {}", id);
+            return Result.success();
+        } catch (Exception e) {
+            log.error("[ClusterController.delete] Error - id: {}, error: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -99,8 +130,16 @@ public class ClusterController {
      */
     @PostMapping("/{id}/test")
     public Result<Boolean> test(@PathVariable Long id, HttpServletRequest request) {
-        auditLog("TEST_CONNECTION", "cluster", id, null, request);
-        return Result.success(k8sService.testConnection(id));
+        log.debug("[ClusterController.test] Enter - id: {}", id);
+        try {
+            boolean result = k8sService.testConnection(id);
+            auditLog("TEST_CONNECTION", "cluster", id, null, request);
+            log.debug("[ClusterController.test] Success - id: {}, result: {}", id, result);
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("[ClusterController.test] Error - id: {}, error: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -113,8 +152,16 @@ public class ClusterController {
      */
     @GetMapping("/{id}/namespaces")
     public Result<List<String>> getNamespaces(@PathVariable Long id, HttpServletRequest request) {
-        auditLog("LIST_NAMESPACES", "cluster", id, null, request);
-        return Result.success(k8sService.getNamespaces(id));
+        log.debug("[ClusterController.getNamespaces] Enter - id: {}", id);
+        try {
+            List<String> namespaces = k8sService.getNamespaces(id);
+            auditLog("LIST_NAMESPACES", "cluster", id, null, request);
+            log.debug("[ClusterController.getNamespaces] Success - id: {}, count: {}", id, namespaces.size());
+            return Result.success(namespaces);
+        } catch (Exception e) {
+            log.error("[ClusterController.getNamespaces] Error - id: {}, error: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -128,8 +175,16 @@ public class ClusterController {
      */
     @GetMapping("/{id}/pods")
     public Result<List<String>> getPods(@PathVariable Long id, @RequestParam String namespace, HttpServletRequest request) {
-        auditLog("LIST_PODS", "cluster", id, "namespace=" + namespace, request);
-        return Result.success(k8sService.getPods(id, namespace));
+        log.debug("[ClusterController.getPods] Enter - id: {}, namespace: {}", id, namespace);
+        try {
+            List<String> pods = k8sService.getPods(id, namespace);
+            auditLog("LIST_PODS", "cluster", id, "namespace=" + namespace, request);
+            log.debug("[ClusterController.getPods] Success - id: {}, namespace: {}, count: {}", id, namespace, pods.size());
+            return Result.success(pods);
+        } catch (Exception e) {
+            log.error("[ClusterController.getPods] Error - id: {}, namespace: {}, error: {}", id, namespace, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -148,8 +203,16 @@ public class ClusterController {
             @PathVariable String pod,
             @RequestParam String namespace,
             HttpServletRequest request) {
-        auditLog("LIST_CONTAINERS", "cluster", id, "pod=" + pod + ",namespace=" + namespace, request);
-        return Result.success(k8sService.getContainers(id, namespace, pod));
+        log.debug("[ClusterController.getContainers] Enter - id: {}, pod: {}, namespace: {}", id, pod, namespace);
+        try {
+            List<String> containers = k8sService.getContainers(id, namespace, pod);
+            auditLog("LIST_CONTAINERS", "cluster", id, "pod=" + pod + ",namespace=" + namespace, request);
+            log.debug("[ClusterController.getContainers] Success - id: {}, pod: {}, count: {}", id, pod, containers.size());
+            return Result.success(containers);
+        } catch (Exception e) {
+            log.error("[ClusterController.getContainers] Error - id: {}, pod: {}, error: {}", id, pod, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -170,8 +233,16 @@ public class ClusterController {
             @RequestParam String namespace,
             @RequestParam String container,
             HttpServletRequest request) {
-        auditLog("GET_LOGS", "cluster", id, "pod=" + pod + ",namespace=" + namespace + ",container=" + container, request);
-        return Result.success(k8sService.getLogs(id, namespace, pod, container));
+        log.debug("[ClusterController.getLogs] Enter - id: {}, pod: {}, namespace: {}, container: {}", id, pod, namespace, container);
+        try {
+            String logs = k8sService.getLogs(id, namespace, pod, container);
+            auditLog("GET_LOGS", "cluster", id, "pod=" + pod + ",namespace=" + namespace + ",container=" + container, request);
+            log.debug("[ClusterController.getLogs] Success - id: {}, pod: {}, log length: {}", id, pod, logs.length());
+            return Result.success(logs);
+        } catch (Exception e) {
+            log.error("[ClusterController.getLogs] Error - id: {}, pod: {}, error: {}", id, pod, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -190,9 +261,17 @@ public class ClusterController {
             @RequestParam String namespace,
             @RequestParam String pods,
             HttpServletRequest request) {
-        List<String> podList = Arrays.asList(pods.split(","));
-        auditLog("BATCH_GET_LOGS", "cluster", id, "namespace=" + namespace + ",pods=" + pods, request);
-        return Result.success(k8sService.getBatchLogs(id, namespace, podList));
+        log.debug("[ClusterController.getBatchLogs] Enter - id: {}, namespace: {}, pods: {}", id, namespace, pods);
+        try {
+            List<String> podList = Arrays.asList(pods.split(","));
+            String logs = k8sService.getBatchLogs(id, namespace, podList);
+            auditLog("BATCH_GET_LOGS", "cluster", id, "namespace=" + namespace + ",pods=" + pods, request);
+            log.debug("[ClusterController.getBatchLogs] Success - id: {}, pods count: {}", id, podList.size());
+            return Result.success(logs);
+        } catch (Exception e) {
+            log.error("[ClusterController.getBatchLogs] Error - id: {}, error: {}", id, e.getMessage(), e);
+            throw e;
+        }
     }
 
     private void auditLog(String action, String resourceType, Long resourceId, String requestParams, HttpServletRequest request) {

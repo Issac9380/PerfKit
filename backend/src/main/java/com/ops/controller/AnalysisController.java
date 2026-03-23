@@ -7,6 +7,7 @@ import com.ops.service.AuditService;
 import com.ops.service.PerformanceService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/analysis")
 @RequiredArgsConstructor
+@Slf4j
 public class AnalysisController {
 
     private final PerformanceService performanceService;
@@ -36,9 +38,15 @@ public class AnalysisController {
      */
     @PostMapping("/execute")
     public Result<ExecuteCommandResult> execute(@RequestBody ExecuteCommandRequest request, HttpServletRequest httpRequest) {
-        ExecuteCommandResult result = performanceService.execute(request);
-        auditLog("EXECUTE_COMMAND", "analysis", null, request.toString(), httpRequest);
-        return Result.success(result);
+        log.debug("[AnalysisController.execute] Enter - request={}", request);
+        try {
+            ExecuteCommandResult result = performanceService.execute(request);
+            auditLog("EXECUTE_COMMAND", "analysis", null, request.toString(), httpRequest);
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("[AnalysisController.execute] Error", e);
+            throw e;
+        }
     }
 
     private void auditLog(String action, String resourceType, Long resourceId, String requestParams, HttpServletRequest request) {

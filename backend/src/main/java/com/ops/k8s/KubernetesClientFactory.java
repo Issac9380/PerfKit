@@ -1,5 +1,7 @@
 package com.ops.k8s;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -26,6 +28,12 @@ public class KubernetesClientFactory {
      * 用于缓存已创建的客户端实例，便于管理和关闭
      */
     private final Map<Long, KubernetesClient> clientCache = new ConcurrentHashMap<>();
+
+    /**
+     * JSON解析器
+     * 用于解析token和certificate认证方式的配置JSON
+     */
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 获取Kubernetes客户端实例
@@ -71,14 +79,20 @@ public class KubernetesClientFactory {
     /**
      * 解析JSON格式的配置信息
      * 将JSON配置字符串解析为键值对Map
-     * 注意：当前为简化实现，实际生产环境应使用Jackson等JSON解析库
      *
      * @param config JSON格式的配置字符串
      * @return Map 配置键值对
      */
     private Map<String, String> parseJsonConfig(String config) {
-        // 简化实现，实际应使用 Jackson 解析
-        return Map.of();
+        if (config == null || config.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(config, new TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to parse JSON config: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
     /**

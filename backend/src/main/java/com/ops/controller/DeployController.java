@@ -5,6 +5,7 @@ import com.ops.service.AuditService;
 import com.ops.service.HotDeployService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/deploy")
 @RequiredArgsConstructor
+@Slf4j
 public class DeployController {
 
     private final HotDeployService hotDeployService;
@@ -35,9 +37,15 @@ public class DeployController {
      */
     @PostMapping("/upload")
     public Result<String> upload(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
-        String fileId = hotDeployService.uploadFile(file);
-        auditLog("FILE_UPLOAD", "deploy", null, "filename=" + file.getOriginalFilename(), request);
-        return Result.success(fileId);
+        log.debug("[DeployController.upload] Enter - filename={}", file.getOriginalFilename());
+        try {
+            String fileId = hotDeployService.uploadFile(file);
+            auditLog("FILE_UPLOAD", "deploy", null, "filename=" + file.getOriginalFilename(), request);
+            return Result.success(fileId);
+        } catch (Exception e) {
+            log.error("[DeployController.upload] Error", e);
+            throw e;
+        }
     }
 
     /**
@@ -64,11 +72,18 @@ public class DeployController {
             @RequestParam String className,
             @RequestParam(required = false) String methodName,
             HttpServletRequest request) {
-        hotDeployService.deploy(clusterId, namespace, podName, containerName, fileId, className, methodName);
-        auditLog("HOT_DEPLOY", "deploy", clusterId,
-                "namespace=" + namespace + ",pod=" + podName + ",container=" + containerName +
-                ",fileId=" + fileId + ",className=" + className + ",methodName=" + methodName, request);
-        return Result.success();
+        log.debug("[DeployController.hotDeploy] Enter - clusterId={}, namespace={}, podName={}, containerName={}, fileId={}, className={}, methodName={}",
+                clusterId, namespace, podName, containerName, fileId, className, methodName);
+        try {
+            hotDeployService.deploy(clusterId, namespace, podName, containerName, fileId, className, methodName);
+            auditLog("HOT_DEPLOY", "deploy", clusterId,
+                    "namespace=" + namespace + ",pod=" + podName + ",container=" + containerName +
+                    ",fileId=" + fileId + ",className=" + className + ",methodName=" + methodName, request);
+            return Result.success();
+        } catch (Exception e) {
+            log.error("[DeployController.hotDeploy] Error", e);
+            throw e;
+        }
     }
 
     private void auditLog(String action, String resourceType, Long resourceId, String requestParams, HttpServletRequest request) {

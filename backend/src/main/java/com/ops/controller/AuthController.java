@@ -8,6 +8,7 @@ import com.ops.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -19,6 +20,7 @@ import java.util.Map;
  * @author Issac Song
  * @date 2026-03-23
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -37,9 +39,16 @@ public class AuthController {
      */
     @PostMapping("/login")
     public Result<Map<String, String>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        String token = authService.login(request);
-        auditService.log(null, "LOGIN", "auth", null, request.getUsername(), getClientIp(httpRequest));
-        return Result.success(Map.of("token", token));
+        log.debug("[AuthController.login] Enter - username: {}", request.getUsername());
+        try {
+            String token = authService.login(request);
+            auditService.log(null, "LOGIN", "auth", null, request.getUsername(), getClientIp(httpRequest));
+            log.debug("[AuthController.login] Success - username: {}", request.getUsername());
+            return Result.success(Map.of("token", token));
+        } catch (Exception e) {
+            log.error("[AuthController.login] Error - username: {}, error: {}", request.getUsername(), e.getMessage());
+            throw e;
+        }
     }
 
     /**
@@ -52,9 +61,16 @@ public class AuthController {
      */
     @PostMapping("/register")
     public Result<Void> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
-        authService.register(request);
-        auditService.log(null, "REGISTER", "auth", null, request.getUsername(), getClientIp(httpRequest));
-        return Result.success();
+        log.debug("[AuthController.register] Enter - username: {}", request.getUsername());
+        try {
+            authService.register(request);
+            auditService.log(null, "REGISTER", "auth", null, request.getUsername(), getClientIp(httpRequest));
+            log.debug("[AuthController.register] Success - username: {}", request.getUsername());
+            return Result.success();
+        } catch (Exception e) {
+            log.error("[AuthController.register] Error - username: {}, error: {}", request.getUsername(), e.getMessage());
+            throw e;
+        }
     }
 
     private String getClientIp(HttpServletRequest request) {
