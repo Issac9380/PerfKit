@@ -1,12 +1,16 @@
 package com.ops.config;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.ops.entity.CommandTemplate;
+import com.ops.entity.User;
 import com.ops.mapper.CommandTemplateMapper;
+import com.ops.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
@@ -26,6 +30,8 @@ import java.util.Map;
 public class DataInitializer implements CommandLineRunner {
 
     private final CommandTemplateMapper commandTemplateMapper;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${database.init-command-templates:true}")
     private boolean initCommandTemplates;
@@ -33,7 +39,42 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (initCommandTemplates) {
+            initDefaultAdmin();
             initCommandTemplates();
+        }
+    }
+
+    /**
+     * 初始化默认管理员用户
+     */
+    private void initDefaultAdmin() {
+        try {
+            // 检查是否已有管理员用户
+            User existingAdmin = userMapper.selectOne(
+                    new QueryWrapper<User>().eq("username", "admin")
+            );
+
+            if (existingAdmin != null) {
+                // 强制更新管理员密码，确保密码正确
+                existingAdmin.setPassword(passwordEncoder.encode("admin123"));
+                userMapper.updateById(existingAdmin);
+                log.info("已更新管理员用户密码: admin");
+                return;
+            }
+
+            // 创建默认管理员用户
+            User admin = new User();
+            admin.setUsername("admin");
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setRole("ADMIN");
+            admin.setStatus("ACTIVE");
+            admin.setEmail("admin@ops.local");
+
+            userMapper.insert(admin);
+            log.info("成功初始化默认管理员用户: admin");
+
+        } catch (Exception e) {
+            log.error("初始化管理员用户失败: {}", e.getMessage(), e);
         }
     }
 
