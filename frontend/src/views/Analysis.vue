@@ -142,9 +142,15 @@
             <div class="output-header">
               <span>火焰图</span>
               <el-tag size="small" type="danger">火焰图</el-tag>
+              <el-button size="small" @click="toggleFlamegraphView">
+                {{ showGraphView ? '查看原始数据' : '查看图形' }}
+              </el-button>
             </div>
-            <div class="flamegraph-tip">火焰图数据已生成</div>
-            <pre class="output-content flamegraph-view">{{ result.output || '无输出' }}</pre>
+            <div v-if="!showGraphView" class="flamegraph-tip">火焰图数据已生成</div>
+            <!-- 图形化火焰图 -->
+            <div v-if="showGraphView && flamegraphData" class="flamegraph-container" ref="flamegraphContainer"></div>
+            <!-- 原始数据 -->
+            <pre v-else class="output-content flamegraph-view">{{ result.output || '无输出' }}</pre>
           </div>
         </template>
 
@@ -193,9 +199,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Cpu, Finished } from '@element-plus/icons-vue'
+import * as d3 from 'd3'
 import api from '@/api'
 
 const executing = ref(false)
@@ -205,6 +212,9 @@ const pods = ref([])
 const containers = ref([])
 const templates = ref([])
 const result = ref(null)
+const showGraphView = ref(false)
+const flamegraphData = ref(null)
+const flamegraphContainer = ref(null)
 
 const form = reactive({
   clusterId: null,
@@ -312,6 +322,252 @@ function formatJson(jsonStr) {
     return jsonStr
   }
 }
+
+// 切换火焰图视图
+function toggleFlamegraphView() {
+  showGraphView.value = !showGraphView.value
+  if (showGraphView.value) {
+    nextTick(() => {
+      parseAndRenderFlamegraph()
+    })
+  }
+}
+
+// 解析并渲染火焰图
+function parseAndRenderFlamegraph() {
+  if (!result.value?.output || !flamegraphContainer.value) return
+
+  try {
+    // 尝试解析 JSON 数据
+    let data = null
+    try {
+      data = JSON.parse(result.value.output)
+    } catch (e) {
+      // 如果不是 JSON，尝试解析为火焰图格式
+      data = parseFlamegraphText(result.value.output)
+    }
+
+    if (data) {
+      flamegraphData.value = data
+      renderFlamegraph(data)
+    }
+  } catch (e) {
+    console.error('解析火焰图数据失败:', e)
+  }
+}
+
+// 解析文本格式的火焰图数据
+function parseFlamegraphText(text) {
+  const lines = text.trim().split('\n')
+  const root = { name: 'root', value: 0, children: [] }
+
+  // 处理 speedscope 格式
+  if (text.includes('"frames"') || text.includes('"events"')) {
+    try {
+      const json = JSON.parse(text)
+      if (json.events) {
+        return convertSpeedscopeToHierarchy(json)
+      }
+    } catch (e) {}
+  }
+
+  // 处理简单格式: functionName;functionName;... count
+  let currentStack = []
+  for (const line of lines) {
+    const match = line.match(/^(.+?)\s+(\d+)$/)
+    if (match) {
+      const stack = match[1].split(';').map(s => s.trim()).filter(s => s)
+      const count = parseInt(match[2])
+
+      // 找到共同的祖先
+      let common = 0
+      for (let i = 0; i < Math.min(currentStack.length, stack.length); i++) {
+        if (currentStack[i] === stack[i]) {
+          common = i + 1
+        } else {
+          break
+        }
+      }
+
+      // 移除不再需要的层级
+      currentStack = currentStack.slice(0, common)
+
+      // 添加新的层级
+      let node = root
+      for (const name of currentStack) {
+        let child = node.children.find(c => c.name === name)
+        if (!child) {
+          child = { name, value: 0, children: [] }
+          node.children.push(child)
+        }
+        node = child
+      }
+
+      // 添加当前帧
+      const frameName = stack[stack.length - 1]
+      let frame = node.children.find(c => c.name === frameName)
+      if (!frame) {
+        frame = { name: frameName, value: 0, children: [] }
+        node.children.push(frame)
+      }
+      frame.value += count
+      currentStack = stack
+    }
+  }
+
+  // 计算总计
+  function calcTotal(node) {
+    if (!node.children || node.children.length === 0) return node.value
+    node.value = node.children.reduce((sum, c) => sum + calcTotal(c), 0)
+    return node.value
+  }
+  calcTotal(root)
+
+  return root
+}
+
+// 转换 speedscope 格式
+function convertSpeedscopeToHierarchy(json) {
+  if (!json.events || !json.events.length) return null
+
+  const root = { name: 'total', value: 0, children: [] }
+
+  for (const event of json.events) {
+    if (event.type === 'complete' || event.type === 'OpenFrame') {
+      const frame = json.frames[event.frame]
+      if (frame && frame.name) {
+        let node = root
+        const names = Array.isArray(frame.name) ? frame.name : [frame.name]
+        for (const name of names) {
+          let child = node.children.find(c => c.name === name)
+          if (!child) {
+            child = { name, value: 0, children: [] }
+            node.children.push(child)
+          }
+          node = child
+        }
+        if (event.type === 'complete') {
+          node.value += event.value || 0
+        }
+      }
+    }
+  }
+
+  return root
+}
+
+// 使用 D3 渲染火焰图
+function renderFlamegraph(data) {
+  const container = flamegraphContainer.value
+  if (!container) return
+
+  // 清空容器
+  container.innerHTML = ''
+
+  const width = container.clientWidth || 800
+  const height = 400
+  const margin = { top: 20, right: 30, bottom: 30, left: 60 }
+
+  // 创建 SVG
+  const svg = d3.select(container)
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+
+  // 创建分层布局
+  const root = d3.hierarchy(data)
+    .sum(d => d.value)
+    .sort((a, b) => b.value - a.value)
+
+  // 创建树形布局
+  const treemap = d3.treemap()
+    .size([width - margin.left - margin.right, height - margin.top - margin.bottom])
+    .padding(1)
+    .round(true)
+
+  treemap(root)
+
+  // 颜色比例
+  const color = d3.scaleOrdinal(d3.schemeTableau10)
+
+  // 创建分组
+  const g = svg.append('g')
+    .attr('transform', `translate(${margin.left},${margin.top})`)
+
+  // 绘制矩形
+  const nodes = g.selectAll('g')
+    .data(root.leaves())
+    .join('g')
+    .attr('transform', d => `translate(${d.x0},${d.y0})`)
+
+  nodes.append('rect')
+    .attr('width', d => Math.max(0, d.x1 - d.x0))
+    .attr('height', d => Math.max(0, d.y1 - d.y0))
+    .attr('fill', (d, i) => color(d.data.name))
+    .attr('opacity', 0.8)
+    .attr('rx', 2)
+    .attr('ry', 2)
+    .on('mouseover', function(event, d) {
+      d3.select(this).attr('opacity', 1)
+      tooltip.style('display', 'block')
+        .html(`<strong>${d.data.name}</strong><br/>耗时: ${d.value}ms`)
+        .style('left', (event.pageX + 10) + 'px')
+        .style('top', (event.pageY - 10) + 'px')
+    })
+    .on('mouseout', function() {
+      d3.select(this).attr('opacity', 0.8)
+      tooltip.style('display', 'none')
+    })
+
+  // 添加文本标签
+  nodes.append('text')
+    .attr('x', 3)
+    .attr('y', 14)
+    .text(d => {
+      const width = d.x1 - d.x0
+      if (width < 40) return ''
+      const name = d.data.name
+      return name.length > width / 7 ? name.substring(0, Math.floor(width / 7)) + '...' : name
+    })
+    .attr('font-size', '10px')
+    .attr('fill', '#fff')
+    .attr('pointer-events', 'none')
+
+  // 添加提示框
+  const tooltip = d3.select(container)
+    .append('div')
+    .attr('class', 'flamegraph-tooltip')
+    .style('display', 'none')
+    .style('position', 'absolute')
+    .style('background', '#1E293B')
+    .style('color', '#fff')
+    .style('padding', '8px 12px')
+    .style('border-radius', '4px')
+    .style('font-size', '12px')
+    .style('pointer-events', 'none')
+    .style('z-index', '1000')
+    .style('box-shadow', '0 2px 8px rgba(0,0,0,0.3)')
+
+  // 添加标题
+  svg.append('text')
+    .attr('x', width / 2)
+    .attr('y', 15)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', '14px')
+    .attr('font-weight', 'bold')
+    .attr('fill', '#1E293B')
+    .text(`火焰图 - 总耗时: ${root.value}ms`)
+}
+
+// 监听结果变化，自动渲染火焰图
+watch(result, (newResult) => {
+  if (newResult?.resultType === 'flamegraph') {
+    showGraphView.value = true
+    nextTick(() => {
+      parseAndRenderFlamegraph()
+    })
+  }
+})
 
 onMounted(() => {
   loadClusters()
@@ -470,5 +726,14 @@ onMounted(() => {
   border-radius: 8px;
   margin-bottom: 12px;
   font-size: 14px;
+}
+
+.flamegraph-container {
+  width: 100%;
+  min-height: 400px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
 }
 </style>

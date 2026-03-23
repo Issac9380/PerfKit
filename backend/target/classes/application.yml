@@ -4,13 +4,18 @@ server:
 spring:
   application:
     name: ops-platform
+  # 多数据库配置
   datasource:
-    driver-class-name: org.sqlite.JDBC
-    url: jdbc:sqlite:data/ops-platform.db
+    # 可选值: mysql, oracle, sqlite
+    # 切换数据库只需修改此处
+    driver-class-name: ${database.driver:org.sqlite.JDBC}
+    url: ${database.url:jdbc:sqlite:data/ops-platform.db}
+    username: ${database.username:}
+    password: ${database.password:}
   sql:
     init:
       mode: always
-      schema-locations: classpath:schema.sql
+      schema-locations: classpath:schema/schema-${database.type:sqlite}.sql
   # 使用 Log4j2 日志框架
   logging:
     config: classpath:log4j2.xml
@@ -23,6 +28,13 @@ logging:
   file:
     name: logs/ops-platform.log
 
+# 数据库配置
+database:
+  # 数据库类型: mysql, oracle, sqlite
+  type: ${DATABASE_TYPE:sqlite}
+  # 初始化预置命令模板 (切换数据库后可设为 false 避免重复初始化)
+  init-command-templates: true
+
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
   configuration:
@@ -30,6 +42,7 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
+      # 主键自增策略，auto 表示由数据库自增处理
       id-type: auto
 
 jwt:

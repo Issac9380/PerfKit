@@ -8,6 +8,7 @@ com\ops\k8s\KubernetesClientFactory$1.class
 com\ops\entity\AuditLog.class
 com\ops\controller\VersionController.class
 com\ops\service\PerformanceService.class
+com\ops\config\DataInitializer.class
 com\ops\service\impl\AiConfigServiceImpl.class
 com\ops\mapper\AuditLogMapper.class
 com\ops\common\GlobalExceptionHandler.class
@@ -39,6 +40,7 @@ com\ops\mapper\VersionMappingMapper.class
 com\ops\mapper\AiConfigMapper.class
 com\ops\dto\LogAnalyzeResult.class
 com\ops\controller\AnalysisController.class
+com\ops\config\DatabaseDialect.class
 com\ops\service\VersionService.class
 com\ops\controller\LogController.class
 com\ops\entity\JdkVersion.class
