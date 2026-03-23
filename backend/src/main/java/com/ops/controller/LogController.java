@@ -13,6 +13,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * LogController
+ * 处理日志分析相关的HTTP请求，包括日志分析和容器列表查询功能
+ *
+ * @author Issac Song
+ * @date 2026-03-23
+ */
 @RestController
 @RequestMapping("/api/v1/log")
 @RequiredArgsConstructor
@@ -21,6 +28,14 @@ public class LogController {
     private final LogAnalysisService logAnalysisService;
     private final AuditService auditService;
 
+    /**
+     * 日志分析
+     * 对指定集群的容器日志进行分析，提取关键信息和异常模式
+     *
+     * @param request     日志分析请求，包含集群ID、命名空间、容器名等参数
+     * @param httpRequest HTTP请求对象，用于获取客户端IP地址
+     * @return 返回日志分析结果的Result对象
+     */
     @PostMapping("/analyze")
     public Result<LogAnalyzeResult> analyze(@RequestBody LogAnalyzeRequest request, HttpServletRequest httpRequest) {
         LogAnalyzeResult result = logAnalysisService.analyze(request);
@@ -28,6 +43,15 @@ public class LogController {
         return Result.success(result);
     }
 
+    /**
+     * 获取容器列表
+     * 查询指定集群和命名空间下可用于日志分析的容器列表
+     *
+     * @param clusterId  集群ID
+     * @param namespace  Kubernetes命名空间
+     * @param request    HTTP请求对象
+     * @return 返回容器列表的Result对象
+     */
     @GetMapping("/containers/{clusterId}")
     public Result<?> getContainers(@PathVariable Long clusterId, @RequestParam String namespace, HttpServletRequest request) {
         auditLog("LIST_CONTAINERS", "log", clusterId, "namespace=" + namespace, request);

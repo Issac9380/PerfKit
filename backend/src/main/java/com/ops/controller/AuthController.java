@@ -12,6 +12,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * AuthController
+ * 处理用户认证相关的HTTP请求，包括用户登录和注册功能
+ *
+ * @author Issac Song
+ * @date 2026-03-23
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -20,6 +27,14 @@ public class AuthController {
     private final AuthService authService;
     private final AuditService auditService;
 
+    /**
+     * 用户登录
+     * 验证用户凭据并返回JWT令牌，用于后续请求的身份认证
+     *
+     * @param request     登录请求，包含用户名和密码
+     * @param httpRequest HTTP请求对象，用于获取客户端IP地址
+     * @return 返回包含JWT令牌的Result对象
+     */
     @PostMapping("/login")
     public Result<Map<String, String>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         String token = authService.login(request);
@@ -27,6 +42,14 @@ public class AuthController {
         return Result.success(Map.of("token", token));
     }
 
+    /**
+     * 用户注册
+     * 创建新用户账号，注册成功后返回成功响应
+     *
+     * @param request     注册请求，包含用户名、密码等信息
+     * @param httpRequest HTTP请求对象，用于获取客户端IP地址
+     * @return 返回操作结果的Result对象
+     */
     @PostMapping("/register")
     public Result<Void> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
         authService.register(request);

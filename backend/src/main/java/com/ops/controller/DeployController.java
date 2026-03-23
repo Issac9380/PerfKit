@@ -10,6 +10,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * DeployController
+ * 处理热部署相关的HTTP请求，包括文件上传和热部署执行功能
+ *
+ * @author Issac Song
+ * @date 2026-03-23
+ */
 @RestController
 @RequestMapping("/api/v1/deploy")
 @RequiredArgsConstructor
@@ -18,6 +25,14 @@ public class DeployController {
     private final HotDeployService hotDeployService;
     private final AuditService auditService;
 
+    /**
+     * 上传部署文件
+     * 将需要热部署的文件上传到服务器，返回文件ID用于后续部署操作
+     *
+     * @param file    待部署的文件（通常是编译后的Java class文件或jar包）
+     * @param request HTTP请求对象
+     * @return 返回文件ID的Result对象
+     */
     @PostMapping("/upload")
     public Result<String> upload(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         String fileId = hotDeployService.uploadFile(file);
@@ -25,6 +40,20 @@ public class DeployController {
         return Result.success(fileId);
     }
 
+    /**
+     * 热部署
+     * 将已上传的文件热部署到目标容器的指定类或方法中，实现无需重启的应用更新
+     *
+     * @param clusterId     集群ID
+     * @param namespace     Kubernetes命名空间
+     * @param podName       Pod名称
+     * @param containerName 容器名称
+     * @param fileId        上传文件返回的文件ID
+     * @param className     目标类名（包含完整包路径）
+     * @param methodName    目标方法名（可选，用于精确热更新特定方法）
+     * @param request       HTTP请求对象
+     * @return 返回操作结果的Result对象
+     */
     @PostMapping("/hot")
     public Result<Void> hotDeploy(
             @RequestParam Long clusterId,
