@@ -15,4 +15,5 @@ public interface K8sService {
     List<String> getPods(Long id, String namespace);
     List<String> getContainers(Long id, String namespace, String podName);
     String getLogs(Long id, String namespace, String podName, String containerName);
+    String getBatchLogs(Long id, String namespace, List<String> podNames);
 }

@@ -124,4 +124,41 @@ public class K8sServiceImpl implements K8sService {
                     .getLog();
         }
     }
+
+    @Override
+    public String getBatchLogs(Long id, String namespace, List<String> podNames) {
+        K8sCluster cluster = clusterMapper.selectById(id);
+        StringBuilder result = new StringBuilder();
+
+        try (KubernetesClient client = clientFactory.getClient(
+                cluster.getApiServer(), cluster.getAuthType(), cluster.getConfig())) {
+
+            for (String podName : podNames) {
+                result.append("========== Pod: ").append(podName).append(" ==========\n");
+                try {
+                    // Get the first container
+                    List<String> containers = client.pods().inNamespace(namespace)
+                            .withName(podName)
+                            .get()
+                            .getSpec().getContainers().stream()
+                            .map(c -> c.getName())
+                            .collect(Collectors.toList());
+
+                    if (!containers.isEmpty()) {
+                        String log = client.pods().inNamespace(namespace)
+                                .withName(podName)
+                                .inContainer(containers.get(0))
+                                .getLog();
+                        result.append(log).append("\n");
+                    } else {
+                        result.append("No containers found\n");
+                    }
+                } catch (Exception e) {
+                    result.append("Error getting logs: ").append(e.getMessage()).append("\n");
+                }
+                result.append("\n");
+            }
+        }
+        return result.toString();
+    }
 }

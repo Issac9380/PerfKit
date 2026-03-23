@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS user (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 初始化默认管理员用户 (密码: admin123)
+INSERT OR IGNORE INTO user (username, password, role) VALUES ('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'ADMIN');
+
 -- K8S 集群配置表
 CREATE TABLE IF NOT EXISTS k8s_cluster (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,6 +33,8 @@ CREATE TABLE IF NOT EXISTS jdk_version (
     file_path VARCHAR(255) NOT NULL,
     file_size BIGINT,
     md5 VARCHAR(32),
+    download_url VARCHAR(500),
+    recommended_arthas_version VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -40,6 +45,18 @@ CREATE TABLE IF NOT EXISTS arthas_version (
     file_path VARCHAR(255) NOT NULL,
     file_size BIGINT,
     md5 VARCHAR(32),
+    download_url VARCHAR(500),
+    compatible_jdk_versions VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- JDK/Arthas 版本映射表
+CREATE TABLE IF NOT EXISTS version_mapping (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jdk_version VARCHAR(50) NOT NULL,
+    arthas_version VARCHAR(50) NOT NULL,
+    description VARCHAR(255),
+    recommended INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -88,6 +105,20 @@ CREATE TABLE IF NOT EXISTS command_template (
     template VARCHAR(255) NOT NULL,
     description VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AI 大模型配置表
+CREATE TABLE IF NOT EXISTS ai_config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(100) NOT NULL,
+    provider VARCHAR(20) NOT NULL,
+    api_key VARCHAR(500),
+    endpoint VARCHAR(255),
+    model VARCHAR(100),
+    is_default INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 操作审计日志表

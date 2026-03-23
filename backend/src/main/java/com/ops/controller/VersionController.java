@@ -3,6 +3,7 @@ package com.ops.controller;
 import com.ops.common.Result;
 import com.ops.entity.ArthasVersion;
 import com.ops.entity.JdkVersion;
+import com.ops.entity.VersionMapping;
 import com.ops.service.VersionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +50,12 @@ public class VersionController {
     public Result<Void> deleteArthasVersion(@PathVariable Long id) {
         versionService.deleteArthasVersion(id);
         return Result.success();
+    }
+
+    // 版本映射管理
+    @GetMapping("/mappings")
+    public Result<List<VersionMapping>> listMappings() {
+        return Result.success(versionService.listMappings());
     }
 
     // 部署到容器

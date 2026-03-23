@@ -46,6 +46,11 @@
           <el-icon><DocumentAdd /></el-icon>
           <span>模板管理</span>
         </el-menu-item>
+
+        <el-menu-item index="/ai-config">
+          <el-icon><Setting /></el-icon>
+          <span>AI 配置</span>
+        </el-menu-item>
       </el-menu>
 
       <div class="sidebar-footer">

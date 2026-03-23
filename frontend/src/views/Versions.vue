@@ -20,23 +20,40 @@
           </div>
 
           <el-table :data="jdkVersions" class="version-table">
-            <el-table-column prop="version" label="版本" />
-            <el-table-column prop="fileSize" label="文件大小">
+            <el-table-column prop="version" label="版本" width="100" />
+            <el-table-column prop="downloadUrl" label="下载链接" min-width="200">
+              <template #default="{ row }">
+                <a v-if="row.downloadUrl" :href="row.downloadUrl" target="_blank" class="download-link">
+                  <el-icon><Link /></el-icon>
+                  官方下载
+                </a>
+                <span v-else class="no-link">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="recommendedArthasVersion" label="配套 Arthas" width="120">
+              <template #default="{ row }">
+                <el-tag v-if="row.recommendedArthasVersion" type="success" size="small">
+                  {{ row.recommendedArthasVersion }}
+                </el-tag>
+                <span v-else class="no-link">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="fileSize" label="文件大小" width="100">
               <template #default="{ row }">
                 {{ formatSize(row.fileSize) }}
               </template>
             </el-table-column>
-            <el-table-column prop="md5" label="MD5" width="300">
+            <el-table-column prop="md5" label="MD5" width="200">
               <template #default="{ row }">
-                <code class="md5-code">{{ row.md5 }}</code>
+                <code class="md5-code">{{ row.md5 || '-' }}</code>
               </template>
             </el-table-column>
-            <el-table-column prop="createdAt" label="上传时间">
+            <el-table-column prop="createdAt" label="上传时间" width="180">
               <template #default="{ row }">
                 {{ formatTime(row.createdAt) }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="150">
+            <el-table-column label="操作" width="100">
               <template #default="{ row }">
                 <el-button size="small" type="danger" @click="deleteVersion('jdk', row.id)">
                   删除
@@ -66,23 +83,40 @@
           </div>
 
           <el-table :data="arthasVersions" class="version-table">
-            <el-table-column prop="version" label="版本" />
-            <el-table-column prop="fileSize" label="文件大小">
+            <el-table-column prop="version" label="版本" width="100" />
+            <el-table-column prop="downloadUrl" label="下载链接" min-width="200">
+              <template #default="{ row }">
+                <a v-if="row.downloadUrl" :href="row.downloadUrl" target="_blank" class="download-link">
+                  <el-icon><Link /></el-icon>
+                  官方下载
+                </a>
+                <span v-else class="no-link">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="compatibleJdkVersions" label="兼容 JDK" width="150">
+              <template #default="{ row }">
+                <el-tag v-if="row.compatibleJdkVersions" type="info" size="small">
+                  JDK {{ row.compatibleJdkVersions }}
+                </el-tag>
+                <span v-else class="no-link">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="fileSize" label="文件大小" width="100">
               <template #default="{ row }">
                 {{ formatSize(row.fileSize) }}
               </template>
             </el-table-column>
-            <el-table-column prop="md5" label="MD5" width="300">
+            <el-table-column prop="md5" label="MD5" width="200">
               <template #default="{ row }">
-                <code class="md5-code">{{ row.md5 }}</code>
+                <code class="md5-code">{{ row.md5 || '-' }}</code>
               </template>
             </el-table-column>
-            <el-table-column prop="createdAt" label="上传时间">
+            <el-table-column prop="createdAt" label="上传时间" width="180">
               <template #default="{ row }">
                 {{ formatTime(row.createdAt) }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="150">
+            <el-table-column label="操作" width="100">
               <template #default="{ row }">
                 <el-button size="small" type="danger" @click="deleteVersion('arthas', row.id)">
                   删除
@@ -99,37 +133,90 @@
           </div>
         </div>
       </el-tab-pane>
+
+      <!-- 版本映射 -->
+      <el-tab-pane label="版本映射" name="mappings">
+        <div class="version-section">
+          <div class="section-header">
+            <span class="section-title">JDK / Arthas 版本映射关系</span>
+            <el-tag type="info">推荐组合</el-tag>
+          </div>
+
+          <el-table :data="versionMappings" class="version-table">
+            <el-table-column prop="jdkVersion" label="JDK 版本" width="120">
+              <template #default="{ row }">
+                <el-tag type="warning">JDK {{ row.jdkVersion }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="arthasVersion" label="Arthas 版本" width="150">
+              <template #default="{ row }">
+                <el-tag type="success">Arthas {{ row.arthasVersion }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="description" label="说明" />
+            <el-table-column label="推荐" width="80">
+              <template #default="{ row }">
+                <el-tag v-if="row.recommended" type="danger" size="small">推荐</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div class="mapping-tips">
+            <el-icon><InfoFilled /></el-icon>
+            <span>以上是官方推荐的 JDK/Arthas 版本组合，生产环境建议使用推荐版本</span>
+          </div>
+        </div>
+      </el-tab-pane>
     </el-tabs>
 
     <!-- 上传对话框 -->
-    <el-dialog v-model="uploadDialogVisible" title="上传版本" width="400px">
-      <el-upload
-        ref="uploadRef"
-        class="upload-demo"
-        drag
-        :action="uploadUrl"
-        :auto-upload="false"
-        :on-success="handleUploadSuccess"
-        :on-error="handleUploadError"
-        :limit="1"
-      >
-        <div class="upload-content">
-          <el-icon class="upload-icon"><UploadFilled /></el-icon>
-          <div class="upload-text">
-            拖拽文件到此处 或 <em>点击上传</em>
-          </div>
-        </div>
-        <template #tip>
-          <div class="el-upload__tip">
-            <template v-if="uploadType === 'jdk'">
-              支持 .tar.gz, .zip, .jdk 格式，最大 100MB
+    <el-dialog v-model="uploadDialogVisible" title="上传版本" width="450px">
+      <el-form label-width="100px">
+        <el-form-item label="选择文件">
+          <el-upload
+            ref="uploadRef"
+            class="upload-demo"
+            drag
+            :action="uploadUrl"
+            :auto-upload="false"
+            :on-success="handleUploadSuccess"
+            :on-error="handleUploadError"
+            :limit="1"
+          >
+            <div class="upload-content">
+              <el-icon class="upload-icon"><UploadFilled /></el-icon>
+              <div class="upload-text">
+                拖拽文件到此处 或 <em>点击上传</em>
+              </div>
+            </div>
+            <template #tip>
+              <div class="el-upload__tip">
+                <template v-if="uploadType === 'jdk'">
+                  支持 .tar.gz, .zip, .jdk 格式，最大 100MB<br/>
+                  建议从 Oracle 或 AdoptOpenJDK 官网下载
+                </template>
+                <template v-else>
+                  支持 .jar, .zip 格式，最大 100MB<br/>
+                  建议从 Arthas GitHub Releases 下载
+                </template>
+              </div>
             </template>
-            <template v-else>
-              支持 .jar, .zip 格式，最大 100MB
-            </template>
+          </el-upload>
+        </el-form-item>
+
+        <el-divider />
+
+        <el-form-item label="或使用链接">
+          <div v-if="uploadType === 'jdk'" class="quick-links">
+            <el-link href="https://adoptium.net/" target="_blank">Adoptium (推荐)</el-link>
+            <el-link href="https://www.oracle.com/java/technologies/downloads/" target="_blank">Oracle JDK</el-link>
           </div>
-        </template>
-      </el-upload>
+          <div v-else class="quick-links">
+            <el-link href="https://github.com/alibaba/arthas/releases" target="_blank">Arthas GitHub</el-link>
+            <el-link href="https://arthas.aliyun.com/" target="_blank">Arthas 官网</el-link>
+          </div>
+        </el-form-item>
+      </el-form>
 
       <template #footer>
         <el-button @click="uploadDialogVisible = false">取消</el-button>
@@ -142,12 +229,13 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Upload, Box, UploadFilled } from '@element-plus/icons-vue'
+import { Upload, Box, UploadFilled, Link, InfoFilled } from '@element-plus/icons-vue'
 import api from '@/api'
 
 const activeTab = ref('jdk')
 const jdkVersions = ref([])
 const arthasVersions = ref([])
+const versionMappings = ref([])
 const uploadDialogVisible = ref(false)
 const uploadType = ref('jdk')
 const uploadRef = ref(null)
@@ -169,6 +257,15 @@ async function loadArthasVersions() {
   try {
     const res = await api.get('/versions/arthas')
     arthasVersions.value = res.data.data || []
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+async function loadVersionMappings() {
+  try {
+    const res = await api.get('/versions/mappings')
+    versionMappings.value = res.data.data || []
   } catch (error) {
     console.error(error)
   }
@@ -237,6 +334,7 @@ function formatTime(time) {
 onMounted(() => {
   loadJdkVersions()
   loadArthasVersions()
+  loadVersionMappings()
 })
 </script>
 
@@ -265,6 +363,24 @@ onMounted(() => {
   margin-top: 16px;
   border-radius: 12px;
   overflow: hidden;
+}
+
+.download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #2563EB;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.download-link:hover {
+  text-decoration: underline;
+}
+
+.no-link {
+  color: #94A3B8;
+  font-size: 13px;
 }
 
 .md5-code {
@@ -328,5 +444,22 @@ onMounted(() => {
 
 .empty-state p {
   color: #94A3B8;
+}
+
+.mapping-tips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #F0F9FF;
+  border-radius: 8px;
+  color: #0369A1;
+  font-size: 13px;
+}
+
+.quick-links {
+  display: flex;
+  gap: 16px;
 }
 </style>

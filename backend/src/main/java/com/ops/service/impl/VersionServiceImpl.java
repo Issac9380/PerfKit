@@ -4,11 +4,14 @@ import com.ops.common.BusinessException;
 import com.ops.entity.ArthasVersion;
 import com.ops.entity.JdkVersion;
 import com.ops.entity.K8sCluster;
+import com.ops.entity.VersionMapping;
 import com.ops.k8s.KubernetesClientFactory;
 import com.ops.mapper.ArthasVersionMapper;
 import com.ops.mapper.JdkVersionMapper;
 import com.ops.mapper.K8sClusterMapper;
+import com.ops.mapper.VersionMappingMapper;
 import com.ops.service.VersionService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
+import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +40,39 @@ public class VersionServiceImpl implements VersionService {
     private final ArthasVersionMapper arthasVersionMapper;
     private final K8sClusterMapper clusterMapper;
     private final KubernetesClientFactory clientFactory;
+    private final VersionMappingMapper versionMappingMapper;
+
+    @PostConstruct
+    public void initDefaultMappings() {
+        // 初始化预设的版本映射关系
+        if (versionMappingMapper.selectCount(null) == 0) {
+            List<VersionMapping> defaultMappings = List.of(
+                createMapping("8", "3.7.2", "JDK 8 推荐使用 Arthas 3.7.2", true),
+                createMapping("11", "3.7.2", "JDK 11 推荐使用 Arthas 3.7.2", true),
+                createMapping("17", "3.7.2", "JDK 17 推荐使用 Arthas 3.7.2", true),
+                createMapping("21", "3.7.2", "JDK 21 推荐使用 Arthas 3.7.2", true),
+                createMapping("8", "3.7.1", "JDK 8 可用", false),
+                createMapping("11", "3.7.1", "JDK 11 可用", false),
+                createMapping("17", "3.7.1", "JDK 17 可用", false),
+                createMapping("21", "3.7.1", "JDK 21 可用", false),
+                createMapping("8", "3.6.8", "JDK 8 兼容版本", false),
+                createMapping("11", "3.6.8", "JDK 11 兼容版本", false),
+                createMapping("17", "3.6.8", "JDK 17 兼容版本", false)
+            );
+            defaultMappings.forEach(versionMappingMapper::insert);
+            log.info("Initialized default version mappings");
+        }
+    }
+
+    private VersionMapping createMapping(String jdkVersion, String arthasVersion, String desc, boolean recommended) {
+        VersionMapping mapping = new VersionMapping();
+        mapping.setJdkVersion(jdkVersion);
+        mapping.setArthasVersion(arthasVersion);
+        mapping.setDescription(desc);
+        mapping.setRecommended(recommended);
+        mapping.setCreatedAt(LocalDateTime.now());
+        return mapping;
+    }
 
     @Override
     public List<JdkVersion> listJdkVersions() {
@@ -124,6 +161,11 @@ public class VersionServiceImpl implements VersionService {
             }
             arthasVersionMapper.deleteById(id);
         }
+    }
+
+    @Override
+    public List<VersionMapping> listMappings() {
+        return versionMappingMapper.selectList(null);
     }
 
     @Override

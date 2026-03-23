@@ -12,6 +12,19 @@ spring:
       mode: always
       schema-locations: classpath:schema.sql
 
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.ops: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: DEBUG
+  file:
+    name: logs/ops-platform.log
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
   configuration:

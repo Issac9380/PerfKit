@@ -211,26 +211,62 @@
     <el-dialog
       v-model="resourceDialogVisible"
       :title="`${selectedCluster?.name} - 资源浏览`"
-      width="800px"
+      width="900px"
     >
       <el-tabs v-model="activeTab">
-        <el-tab-pane label="命名空间" name="namespaces">
-          <el-select
-            v-model="selectedNamespace"
-            placeholder="选择命名空间"
-            style="width: 100%; margin-bottom: 16px"
-            @change="loadPods"
-          >
-            <el-option
-              v-for="ns in namespaces"
-              :key="ns"
-              :label="ns"
-              :value="ns"
-            />
-          </el-select>
+        <el-tab-pane label="Pod 列表" name="namespaces">
+          <!-- 搜索和筛选 -->
+          <div class="pod-filters">
+            <el-select
+              v-model="selectedNamespace"
+              placeholder="选择命名空间"
+              style="width: 200px"
+              @change="loadPods"
+              clearable
+            >
+              <el-option
+                v-for="ns in namespaces"
+                :key="ns"
+                :label="ns"
+                :value="ns"
+              />
+            </el-select>
 
-          <el-table :data="pods" v-if="selectedNamespace">
-            <el-table-column prop="name" label="Pod 名称" />
+            <el-input
+              v-model="podSearch"
+              placeholder="搜索 Pod 名称..."
+              style="width: 250px"
+              clearable
+              :prefix-icon="Search"
+            />
+
+            <span class="pod-count">共 {{ filteredPods.length }} 个 Pod</span>
+          </div>
+
+          <!-- Pod 表格（支持分页和选择） -->
+          <el-table
+            v-if="selectedNamespace"
+            :data="paginatedPods"
+            @selection-change="handlePodSelection"
+            max-height="400"
+            style="width: 100%"
+          >
+            <el-table-column type="selection" width="50" />
+            <el-table-column prop="name" label="Pod 名称" min-width="300">
+              <template #default="{ row }">
+                <div class="pod-name-cell">
+                  <el-icon><Box /></el-icon>
+                  <span>{{ row.name }}</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="120">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 'Running' ? 'success' : 'info'" size="small">
+                  {{ row.status || 'Unknown' }}
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="200">
               <template #default="{ row }">
                 <el-button size="small" @click="viewContainers(row)">
@@ -242,6 +278,30 @@
               </template>
             </el-table-column>
           </el-table>
+
+          <!-- 分页 -->
+          <div v-if="selectedNamespace && filteredPods.length > pageSize" class="pagination-wrap">
+            <el-pagination
+              v-model:current-page="currentPage"
+              :page-size="pageSize"
+              :total="filteredPods.length"
+              layout="prev, pager, next"
+              background
+            />
+          </div>
+
+          <!-- 批量操作 -->
+          <div v-if="selectedPods.length > 0" class="batch-actions">
+            <el-button type="primary" size="small" @click="batchViewLogs">
+              批量日志 ({{ selectedPods.length }})
+            </el-button>
+            <el-button type="success" size="small" @click="batchAnalyze">
+              批量分析 ({{ selectedPods.length }})
+            </el-button>
+            <el-button size="small" @click="clearPodSelection">
+              清空选择
+            </el-button>
+          </div>
         </el-tab-pane>
 
         <el-tab-pane label="日志" name="logs" v-if="logContent">
@@ -255,7 +315,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Connection, FolderOpened, MoreFilled, Upload, Document } from '@element-plus/icons-vue'
 import api from '@/api'
@@ -274,6 +334,46 @@ const pods = ref([])
 const containers = ref([])
 const logContent = ref('')
 const activeTab = ref('namespaces')
+
+// Pod 搜索、分页和批量选择
+const podSearch = ref('')
+const selectedPods = ref([])
+const currentPage = ref(1)
+const pageSize = ref(20)
+
+// 搜索过滤后的 Pod 列表
+const filteredPods = computed(() => {
+  if (!podSearch.value) return pods.value
+  const keyword = podSearch.value.toLowerCase()
+  return pods.value.filter(pod =>
+    pod.name.toLowerCase().includes(keyword)
+  )
+})
+
+// 分页后的 Pod 列表
+const paginatedPods = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredPods.value.slice(start, end)
+})
+
+function handlePodSelection(selection) {
+  selectedPods.value = selection
+}
+
+function handlePageChange(page) {
+  currentPage.value = page
+}
+
+function clearPodSelection() {
+  selectedPods.value = []
+  currentPage.value = 1
+}
+
+// 搜索时重置分页
+watch(podSearch, () => {
+  currentPage.value = 1
+})
 
 const form = reactive({
   name: '',
@@ -448,6 +548,10 @@ async function openNamespacesDialog(cluster) {
 async function loadPods() {
   if (!selectedNamespace.value) return
 
+  // 清空之前的选择
+  selectedPods.value = []
+  currentPage.value = 1
+
   try {
     const res = await api.get(`/clusters/${selectedCluster.value.id}/pods?namespace=${selectedNamespace.value}`)
     pods.value = res.data.data || []
@@ -487,6 +591,32 @@ async function viewLogs(pod) {
   } catch (error) {
     ElMessage.error('获取日志失败')
   }
+}
+
+// 批量获取日志
+async function batchViewLogs() {
+  if (selectedPods.value.length === 0) return
+
+  try {
+    const podNames = selectedPods.value.map(p => p.name).join(',')
+    const res = await api.get(
+      `/clusters/${selectedCluster.value.id}/pods/batch/logs?namespace=${selectedNamespace.value}&pods=${podNames}`
+    )
+    logContent.value = res.data.data || '无日志'
+    activeTab.value = 'logs'
+  } catch (error) {
+    ElMessage.error('批量获取日志失败')
+  }
+}
+
+// 批量分析（跳转到性能分析页面）
+function batchAnalyze() {
+  if (selectedPods.value.length === 0) return
+
+  const podNames = selectedPods.value.map(p => p.name)
+  // 跳转到性能分析页面，并传递选中的 Pod 信息
+  ElMessage.info(`已选择 ${podNames.length} 个 Pod，请选择分析命令`)
+  // 这里可以导航到分析页面并预填选中的 Pod
 }
 
 async function handleCommand(cmd, cluster) {
@@ -680,5 +810,49 @@ onMounted(() => {
 
 .file-name .el-icon {
   font-size: 14px;
+}
+
+/* Pod 筛选和批量操作样式 */
+.pod-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #F8FAFC;
+  border-radius: 8px;
+}
+
+.pod-filters .el-input {
+  max-width: 300px;
+}
+
+.pod-count {
+  font-size: 13px;
+  color: #64748B;
+  white-space: nowrap;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #EFF6FF;
+  border-radius: 8px;
+  border: 1px solid #BFDBFE;
+}
+
+.batch-actions .el-button {
+  font-weight: 500;
 }
 </style>

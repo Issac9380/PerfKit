@@ -45,6 +45,11 @@ const routes = [
         path: 'templates',
         name: 'Templates',
         component: () => import('@/views/Templates.vue')
+      },
+      {
+        path: 'ai-config',
+        name: 'AiConfig',
+        component: () => import('@/views/AiConfig.vue')
       }
     ]
   }

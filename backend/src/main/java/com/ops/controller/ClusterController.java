@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -86,6 +87,17 @@ public class ClusterController {
             HttpServletRequest request) {
         auditLog("GET_LOGS", "cluster", id, "pod=" + pod + ",namespace=" + namespace + ",container=" + container, request);
         return Result.success(k8sService.getLogs(id, namespace, pod, container));
+    }
+
+    @GetMapping("/{id}/pods/batch/logs")
+    public Result<String> getBatchLogs(
+            @PathVariable Long id,
+            @RequestParam String namespace,
+            @RequestParam String pods,
+            HttpServletRequest request) {
+        List<String> podList = Arrays.asList(pods.split(","));
+        auditLog("BATCH_GET_LOGS", "cluster", id, "namespace=" + namespace + ",pods=" + pods, request);
+        return Result.success(k8sService.getBatchLogs(id, namespace, podList));
     }
 
     private void auditLog(String action, String resourceType, Long resourceId, String requestParams, HttpServletRequest request) {
